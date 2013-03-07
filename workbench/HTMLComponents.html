@@ -1,5 +1,5 @@
 <!--
-Copyright 2012 The Toolkitchen Authors. All rights reserved.
+Copyright 2013 The Toolkitchen Authors. All rights reserved.
 Use of this source code is governed by a BSD-style
 license that can be found in the LICENSE file.
 -->
@@ -8,14 +8,15 @@ license that can be found in the LICENSE file.
   <head>
     <title></title>
     <meta charset="UTF-8">
-    <script src="../CustomElements/CustomElements.js"></script>
-    <script src="../CustomElements/HTMLElementElement.js"></script>
-    <script src="../CustomElements/ComponentDocument.js"></script>
-    <link rel="components" href="test-component.html">
+    <script src="../src/HTMLComponents.js"></script>
+    <link rel="component" href="test-component.html">
   </head>
   <body>
     <script>
-      componentDocument.parse(document, function() {
+      HTMLComponents.preload(document, function() {
+        console.dir(HTMLComponents.cache);
+        console.log('done');
+        /*
         first = document.createElement('x-first');
         document.body.appendChild(first);
         //
@@ -24,6 +25,7 @@ license that can be found in the LICENSE file.
         //
         last = document.createElement('x-last');
         document.body.appendChild(last).textContent = '[x-last]';
+        */
       });
     </script>
   </body>
