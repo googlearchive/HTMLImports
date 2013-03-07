@@ -1,111 +1,51 @@
 /*
- * Copyright 2012 The Toolkitchen Authors. All rights reserved.
+ * Copyright 2013 The Toolkitchen Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
 
+(function() {
+  
 // highlander object represents a primary document (the argument to 'parse')
 // at the root of a tree of documents
 
-var componentDocument = {
+var HTMLComponents = {
   preloadSelectors: [
-    'link[rel=components]',
+    'link[rel=component]',
     'script[src]',
     'link[rel=stylesheet]'
   ],
-  parseSelectors: [
-    'link[rel=components]',
-    'script[src]',
-    'element',
-    'link[rel=stylesheet]'
-  ],
-  parseMap: {
-    link: 'parseLink',
-    script: 'parseScript',
-    element: 'parseElement'
-  },
-  // document parsing is asynchronous
-  parse: function(inDocument, inNext) {
-    // resource bucket
-    cd.resources = {};
-    // first we preload all resources in the complete document tree
-    cd.preload(inDocument, function() {
-      // then we parse document content
-      cd.continueParse(inDocument, inNext);
-    });
-  },
   preload: function(inDocument, inNext) {
+    // alias the loader cache in HTMLComponents
+    hc.cache = loader.cache;
     // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(cd.preloadSelectors);
-    // preload all nodes, call inNext when complete, call cd.eachPreload
+    var nodes = inDocument.querySelectorAll(hc.preloadSelectors);
+    // preload all nodes, call inNext when complete, call hc.eachPreload
     // for each preloaded node
-    loader.loadAll(nodes, inNext, cd.eachPreload);
+    loader.loadAll(nodes, inNext, hc.eachPreload);
   },
   eachPreload: function(data, next, url, elt) {
     // for document links
-    if (elt.localName === 'link' && elt.getAttribute('rel') === 'components') {
+    if (hc.isDocumentLink(elt)) {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
       // store document resource
-      cd.resources[url] = makeDocument(data, url);
+      document.__resource = loader.cache[url] = makeDocument(data, url);
       // re-enters preloader here
-      cd.preload(document, next);
+      HTMLComponents.preload(document, next);
     } else {
-      // store othe resource
-      cd.resources[url] = data;
       // no preprocessing on other nodes
       next();
     }
   },
-  continueParse: function(inDocument, inNext) {
-    // complete document tree is loaded at this point
-    // parse document content
-    cd.parseElts(inDocument);
-    // parsing complete
-    inNext();
-  },
-  parseElts: function(inDocument) {
-    if (inDocument) {
-      // all parsable elements in inDocument (depth-first pre-order traversal)
-      var elts = inDocument.querySelectorAll(cd.parseSelectors);
-      // map of localNames to parser methods
-      var map = cd.parseMap;
-      // for each parsable node type in inDocument, call the mapped parsing method
-      forEach(elts, function(e) {
-        //console.log(map[e.localName] + ":", path.nodeUrl(e));
-        cd[map[e.localName]](e);
-      });
-    }
-  },
-  parseLink: function(inLinkElt) {
-    // rel=components
-    if (inLinkElt.getAttribute('rel') === 'components') {
-      cd.parseElts(cd.fetch(inLinkElt));
-    } else {
-    // rel=stylesheet
-    }
-  },
-  parseScript: function(inScriptElt) {
-    // ignore scripts in primary document, they are already loaded
-    if (inScriptElt.ownerDocument === document) {
-      return;
-    }
-    // evaluate now
-    console.log(cd.fetch(inScriptElt) || '(no code)');
-  },
-  parseElement: function(inElementElt) {
-    var element = window.SDOM ? SDOM(inElementElt) : inElementElt;
-    new HTMLElementElement(element);
-  },
-  fetch: function(inNode) {
-    return cd.resources[path.nodeUrl(inNode)];
+  isDocumentLink: function(inElt) {
+    return (inElt.localName === 'link' 
+        && inElt.getAttribute('rel') === 'component');
   }
 };
 
-var cd = componentDocument;
-
-cd.preloadSelectors = cd.preloadSelectors.join(',');
-cd.parseSelectors = cd.parseSelectors.join(',');
+var hc = HTMLComponents;
+hc.preloadSelectors = hc.preloadSelectors.join(',');
 
 var makeDocument = function(inHTML, inUrl) {
   var doc = document.implementation.createHTMLDocument('component');
@@ -115,44 +55,57 @@ var makeDocument = function(inHTML, inUrl) {
 };
 
 loader = {
-  load: function(inNode, inCallback) {
-    xhr.load(path.nodeUrl(inNode), function(err, data, url) {
-      inCallback(err, data, url);
-    });
-  },
+  cache: {},
   loadAll: function(inNodes, inNext, inEach) {
+    // something to do?
     if (!inNodes.length) {
       inNext();
     }
+    // no transactions yet
     var inflight = 0;
+    // begin async load of resource described by inElt
+    // 'each' and 'tail' are possible continuations
     function head(inElt) {
       inflight++;
-      loader.load(inElt, function(err, data, url) {
+      var url = path.nodeUrl(inElt);
+      var resource = loader.cache[url];
+      if (resource) {
+        inElt.__resource = resource;
+        tail();
+      }
+      xhr.load(url, function(err, resource, url) {
         if (err) {
           tail();
         } else {
-          each(data, tail, url, inElt);
+          inElt.__resource = loader.cache[url] = resource;
+          each(resource, tail, url, inElt);
         }
       });
     };
+    // when a resource load is complete, decrement the count
+    // of inflight loads and process the next one
     function tail() {
       if (!--inflight) {
         inNext();
       };
     };
+    // inEach function is optional 'before' advice for tail
+    // inEach must call it's 'next' argument
     var each = inEach || tail;
+    // begin async loading
     forEach(inNodes, head);
   }
 };
 
 var path = {
   nodeUrl: function(inNode) {
-    var nodeUrl = inNode.getAttribute("href") || inNode.getAttribute("src");
-    return path.resolveNodeUrl(inNode, nodeUrl);
+    return path.resolveNodeUrl(inNode, path.hrefOrSrc(inNode));
+  },
+  hrefOrSrc: function(inNode) {
+    return inNode.getAttribute("href") || inNode.getAttribute("src");
   },
   resolveNodeUrl: function(inNode, inRelativeUrl) {
-    var baseUrl = this.documentUrlFromNode(inNode);
-    return this.resolveUrl(baseUrl, inRelativeUrl);
+    return this.resolveUrl(this.documentUrlFromNode(inNode), inRelativeUrl);
   },
   documentUrlFromNode: function(inNode) {
     var d = inNode.ownerDocument;
@@ -165,8 +118,7 @@ var path = {
     if (this.isAbsUrl(inUrl)) {
       return inUrl;
     }
-    var base = this.urlToPath(inBaseUrl);
-    return this.compressUrl(base + inUrl);
+    return this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
   },
   isAbsUrl: function(inUrl) {
     return /(^data:)|(^http[s]?:)|(^\/)/.test(inUrl);
@@ -210,3 +162,9 @@ var xhr = {
 };
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
+
+// exports
+
+window.HTMLComponents = HTMLComponents;
+  
+})();
