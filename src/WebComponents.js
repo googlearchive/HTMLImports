@@ -9,30 +9,30 @@
 // highlander object represents a primary document (the argument to 'parse')
 // at the root of a tree of documents
 
-var HTMLComponents = {
+var WebComponents = {
   preloadSelectors: [
     'link[rel=component]',
     'script[src]',
     'link[rel=stylesheet]'
   ],
   preload: function(inDocument, inNext) {
-    // alias the loader cache in HTMLComponents
-    hc.cache = loader.cache;
+    // alias the loader cache in WebComponents
+    wc.cache = loader.cache;
     // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(hc.preloadSelectors);
-    // preload all nodes, call inNext when complete, call hc.eachPreload
+    var nodes = inDocument.querySelectorAll(wc.preloadSelectors);
+    // preload all nodes, call inNext when complete, call wc.eachPreload
     // for each preloaded node
-    loader.loadAll(nodes, inNext, hc.eachPreload);
+    loader.loadAll(nodes, inNext, wc.eachPreload);
   },
   eachPreload: function(data, next, url, elt) {
     // for document links
-    if (hc.isDocumentLink(elt)) {
+    if (wc.isDocumentLink(elt)) {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
       // store document resource
       document.__resource = loader.cache[url] = makeDocument(data, url);
       // re-enters preloader here
-      HTMLComponents.preload(document, next);
+      WebComponents.preload(document, next);
     } else {
       // no preprocessing on other nodes
       next();
@@ -44,8 +44,8 @@ var HTMLComponents = {
   }
 };
 
-var hc = HTMLComponents;
-hc.preloadSelectors = hc.preloadSelectors.join(',');
+var wc = WebComponents;
+wc.preloadSelectors = wc.preloadSelectors.join(',');
 
 var makeDocument = function(inHTML, inUrl) {
   var doc = document.implementation.createHTMLDocument('component');
@@ -81,14 +81,14 @@ loader = {
           each(resource, tail, url, inElt);
         }
       });
-    };
+    }
     // when a resource load is complete, decrement the count
     // of inflight loads and process the next one
     function tail() {
       if (!--inflight) {
         inNext();
-      };
-    };
+      }
+    }
     // inEach function is optional 'before' advice for tail
     // inEach must call it's 'next' argument
     var each = inEach || tail;
@@ -165,6 +165,6 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
 
-window.HTMLComponents = HTMLComponents;
+window.WebComponents = WebComponents;
   
 })();
