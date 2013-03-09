@@ -17,18 +17,17 @@ var thisFile = 'web-components.js';
 
 // acquire directives and base path from script element
 
-var attributes, base = '';
+var base = '', attributes = {};
 
 (function() {
   var s$ = document.querySelectorAll('[src]');
   Array.prototype.forEach.call(s$, function(s) {
     var src = s.getAttribute('src');
     if (src.slice(-thisFile.length) === thisFile) {
-      attributes = source.attributes;
+      attributes = s.attributes;
       base = src.slice(0, -thisFile.length);
     }
   });
-  attributes = attributes || {};
 })();
 
 // flags
@@ -90,8 +89,13 @@ console.log(flags);
 // bootstrap
 
 window.addEventListener('load', function() {
-  // preload document resource tree
-  WebComponents.preload(document);
+  // preload document resource trees
+  WebComponents.preload(document, function() {
+    // send WebComponentsLoaded when finished
+    var e = document.createEvent('Event');
+    e.initEvent('WebComponentsLoaded', true, true);
+    document.body.dispatchEvent(e);
+  });
 });
 
 })(window.__exported_components_polyfill_scope__);
