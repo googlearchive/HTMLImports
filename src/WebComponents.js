@@ -35,8 +35,7 @@ var WebComponents = {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
       // store document resource
-      elt.component = elt.__resource = loader.cache[url] = 
-          makeDocument(data, url);
+      elt.component = elt.__resource = loader.cache[url] = document;
       // re-enters preloader here
       WebComponents.preload(document, next);
     } else {
