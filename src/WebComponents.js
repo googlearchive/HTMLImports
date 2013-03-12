@@ -20,6 +20,11 @@ var WebComponents = {
     wc.cache = loader.cache;
     // all preloadable nodes in inDocument
     var nodes = inDocument.querySelectorAll(wc.preloadSelectors);
+    // filter out scripts in the main document
+    // TODO(sjmiles): do this by altering the selector list instead
+    nodes = Array.prototype.filter.call(nodes, function(n) {
+      return (n.localName !== 'script') || (n.ownerDocument !== document);
+    });
     // preload all nodes, call inNext when complete, call wc.eachPreload
     // for each preloaded node
     loader.loadAll(nodes, inNext, wc.eachPreload);
