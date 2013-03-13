@@ -155,7 +155,7 @@ var xhr = {
   },
   load: function(url, next, nextContext) {
     var request = new XMLHttpRequest();
-    request.open('GET', url, xhr.async);
+    request.open('GET', url + '?' + Math.random(), xhr.async);
     request.addEventListener('readystatechange', function(e) {
       if (request.readyState === 4) {
         next.call(nextContext, !xhr.ok(request) && request,
