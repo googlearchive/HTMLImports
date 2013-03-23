@@ -171,5 +171,19 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 // exports
 
 window.WebComponents = WebComponents;
-  
+
+// bootstrap
+
+window.addEventListener('load', function() {
+  // preload document resource trees
+  WebComponents.preload(document, function() {
+    // TODO(sjmiles): ShadowDOM polyfill pollution
+    var sdocument = window.wrap ? wrap(document) : document;
+    // send WebComponentsLoaded when finished
+    sdocument.body.dispatchEvent(
+      new CustomEvent('WebComponentsLoaded', {bubbles: true})
+    );
+  });
+});
+
 })();

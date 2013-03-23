@@ -86,19 +86,4 @@ console.log(flags);
   document.write('<script src="' + base + inSrc + '"></script>');
 });
 
-// bootstrap
-
-// TODO(sjmiles): ShadowDOM polyfill pollution
-var sdocument = window.wrap ? wrap(document) : document;
-
-window.addEventListener('load', function() {
-  // preload document resource trees
-  WebComponents.preload(document, function() {
-    // send WebComponentsLoaded when finished
-    var e = document.createEvent('Event');
-    e.initEvent('WebComponentsLoaded', true, true);
-    sdocument.body.dispatchEvent(e);
-  });
-});
-
 })(window.__exported_components_polyfill_scope__);
