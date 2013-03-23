@@ -175,6 +175,15 @@ window.WebComponents = WebComponents;
 
 // bootstrap
 
+// IE shim for CustomEvent
+if (typeof CustomEvent !== 'function') {
+  var CustomEvent = function(inType) {
+     var e = document.createEvent('HTMLEvents');
+     e.initEvent(inType, true, true);
+     return e;
+  };
+}
+
 window.addEventListener('load', function() {
   // preload document resource trees
   WebComponents.preload(document, function() {
