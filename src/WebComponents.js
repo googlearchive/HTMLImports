@@ -114,6 +114,7 @@ var path = {
   },
   documentUrlFromNode: function(inNode) {
     var d = inNode.ownerDocument;
+    // TODO(sjmiles): ShadowDOM polyfill pollution
     var url = d && (d._URL || d.URL || (window.unwrap && unwrap(d)._URL)) || '';
     // take only the left side if there is a #
     url = url.split('#')[0];
