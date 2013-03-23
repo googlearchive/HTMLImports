@@ -114,9 +114,9 @@ var path = {
   },
   documentUrlFromNode: function(inNode) {
     var d = inNode.ownerDocument;
-    var url = (d && (d._URL || d.URL)) || "";
+    var url = d && (d._URL || d.URL || (window.unwrap && unwrap(d)._URL)) || '';
     // take only the left side if there is a #
-    url = url.split("#")[0];
+    url = url.split('#')[0];
     return url;
   },
   resolveUrl: function(inBaseUrl, inUrl) {
