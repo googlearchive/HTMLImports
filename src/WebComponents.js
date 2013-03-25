@@ -77,15 +77,16 @@ loader = {
       if (resource) {
         inElt.__resource = resource;
         tail();
+      } else {
+        xhr.load(url, function(err, resource, url) {
+          if (err) {
+            tail();
+          } else {
+            inElt.__resource = loader.cache[url] = resource;
+            each(resource, tail, url, inElt);
+          }
+        });
       }
-      xhr.load(url, function(err, resource, url) {
-        if (err) {
-          tail();
-        } else {
-          inElt.__resource = loader.cache[url] = resource;
-          each(resource, tail, url, inElt);
-        }
-      });
     }
     // when a resource load is complete, decrement the count
     // of inflight loads and process the next one
