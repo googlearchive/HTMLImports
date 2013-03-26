@@ -66,12 +66,9 @@ loader = {
     if (!inNodes.length) {
       inNext();
     }
-    // no transactions yet
-    var inflight = 0;
     // begin async load of resource described by inElt
     // 'each' and 'tail' are possible continuations
     function head(inElt) {
-      inflight++;
       var url = path.nodeUrl(inElt);
       var resource = loader.cache[url];
       if (resource) {
@@ -98,6 +95,8 @@ loader = {
     // inEach function is optional 'before' advice for tail
     // inEach must call it's 'next' argument
     var each = inEach || tail;
+    // number of transactions to complete
+    var inflight = inNodes.length;
     // begin async loading
     forEach(inNodes, head);
   }
