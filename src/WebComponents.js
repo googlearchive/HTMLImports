@@ -23,7 +23,7 @@ var WebComponents = {
     // filter out scripts in the main document
     // TODO(sjmiles): do this by altering the selector list instead
     nodes = Array.prototype.filter.call(nodes, function(n) {
-      return (n.localName !== 'script') || (n.ownerDocument !== document);
+      return wc.isDocumentLink(n) || (n.ownerDocument !== document);
     });
     // preload all nodes, call inNext when complete, call wc.eachPreload
     // for each preloaded node
