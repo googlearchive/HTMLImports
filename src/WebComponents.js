@@ -34,18 +34,30 @@ var WebComponents = {
     if (wc.isDocumentLink(elt)) {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
+      // resolve resource paths relative to host document
+      pathResolver.resolve(document);
       // store document resource
       elt.component = elt.__resource = loader.cache[url] = document;
       // re-enters preloader here
       WebComponents.preload(document, next);
-    } else {
+    } else  {
+      // resolve stylesheet resource paths relative to host document
+      if (wc.isStylesheetLink(elt)) {
+        pathResolver.resolveSheet(elt);
+      }
       // no preprocessing on other nodes
       next();
     }
   },
   isDocumentLink: function(inElt) {
+    return wc.isLinkRel(inElt, 'component');
+  },
+  isStylesheetLink: function(inElt) {
+    return wc.isLinkRel(inElt, 'stylesheet');
+  },
+  isLinkRel: function(inElt, inRel) {
     return (inElt.localName === 'link' 
-        && inElt.getAttribute('rel') === 'component');
+        && inElt.getAttribute('rel') === inRel);
   }
 };
 
@@ -147,6 +159,66 @@ var path = {
     return parts.join("/");
   }
 };
+
+// Path resolution helper to ensure resource paths are resolved correctly
+var pathResolver = {
+  resolve: function(inRoot) {
+    var docUrl = path.documentUrlFromNode(inRoot.body);
+    pathResolver._resolve(inRoot.body, docUrl);
+  },
+  _resolve: function(inRoot, inUrl) {
+    pathResolver.resolveAttributes(inRoot, inUrl);
+    pathResolver.resolveStyleElts(inRoot, inUrl);
+    // handle templates, if supported
+    if (window.templateContent) {
+      var templates = inRoot.querySelectorAll('template');
+      if (templates) {
+        forEach(templates, function(t) {
+          pathResolver._resolve(templateContent(t), inUrl);
+        });
+      }
+    }
+  },
+  resolveCssText: function(inCssText, inBaseUrl) {
+    return inCssText.replace(/url\([^)]*\)/g, function(inMatch) {
+      // find the url path, ignore quotes in url string
+      var urlPath = inMatch.replace(/["']/g, "").slice(4, -1);
+      urlPath = path.resolveUrl(inBaseUrl, urlPath);
+      return "url(" + urlPath + ")";
+    });
+  },
+  resolveSheet: function(inSheet) {
+    var docUrl = path.documentUrlFromNode(inSheet);
+    inSheet.__resource = pathResolver.resolveCssText(inSheet.__resource, docUrl);
+  },
+  resolveStyleElts: function(inRoot, inUrl) {
+    var styles = inRoot.querySelectorAll('style');
+    if (styles) {
+      forEach(styles, function(style) {
+        style.textContent = pathResolver.resolveCssText(style.textContent, inUrl);
+      });
+    }
+  },
+  resolveAttributes: function(inRoot, inUrl) {
+    // search for attributes that host urls
+    var nodes = inRoot && inRoot.querySelectorAll(URL_ATTRS_SELECTOR);
+    if (nodes) {
+      forEach(nodes, function(n) {
+        URL_ATTRS.forEach(function(v) {
+          var attr = n.attributes[v];
+          if (attr && attr.value && 
+             (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
+            attr.value = path.resolveUrl(inUrl, attr.value);
+          }
+        });
+      });
+    }
+  }
+}
+
+var URL_ATTRS = ['href', 'src', 'action'];
+var URL_ATTRS_SELECTOR = ':not(link)[' + URL_ATTRS.join('],[') + ']';
+var URL_TEMPLATE_SEARCH = '{{.*}}';
 
 var xhr = {
   async: true,

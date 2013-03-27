@@ -20,6 +20,15 @@ license that can be found in the LICENSE file.
         console.log(link.__resource);
         var img = link.__resource.querySelector('img');
         document.body.appendChild(img);
+        
+        var sheet = link.__resource.querySelector('link[rel=stylesheet]');
+        var style = document.createElement('style');
+        style.textContent = sheet.__resource;
+        document.head.appendChild(style);
+        var div = document.createElement('div');
+        div.className = "mail";
+        document.body.appendChild(div);
+        
       });
     </script>
   </body>
