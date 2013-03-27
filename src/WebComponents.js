@@ -188,7 +188,7 @@ var pathResolver = {
     });
   },
   resolveSheet: function(inSheet) {
-    var docUrl = path.documentUrlFromNode(inSheet);
+    var docUrl = path.nodeUrl(inSheet);
     inSheet.__resource = pathResolver.resolveCssText(inSheet.__resource, docUrl);
   },
   resolveStyleElts: function(inRoot, inUrl) {
