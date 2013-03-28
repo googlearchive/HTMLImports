@@ -268,8 +268,8 @@ window.WebComponents = WebComponents;
 // bootstrap
 
 // IE shim for CustomEvent
-if (typeof CustomEvent !== 'function') {
-  var CustomEvent = function(inType) {
+if (typeof window.CustomEvent !== 'function') {
+  window.CustomEvent = function(inType) {
      var e = document.createEvent('HTMLEvents');
      e.initEvent(inType, true, true);
      return e;
