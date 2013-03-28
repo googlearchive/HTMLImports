@@ -52,13 +52,15 @@ if (!flags.noOpts) {
 
 // process log flags
 
-var logFlags = {};
+var logFlags = window.logFlags || {};
+
 if (flags.log) {
   var logs = flags.log.split(',');
   for (var i=0, f; (f=logs[i]); i++) {
     logFlags[f] = true;
   }
 }
+
 window.logFlags = logFlags;
 
 // support exportas directive
