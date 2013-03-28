@@ -68,11 +68,11 @@ function isDocumentLink(inElt) {
 }
 
 function isDocumentLink(inElt) {
-  return wc.isLinkRel(inElt, 'component');
+  return isLinkRel(inElt, 'component');
 }
 
 function isStylesheetLink(inElt) {
-  return wc.isLinkRel(inElt, 'stylesheet');
+  return isLinkRel(inElt, 'stylesheet');
 }
 
 function isLinkRel(inElt, inRel) {
