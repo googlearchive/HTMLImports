@@ -50,7 +50,7 @@ var WebComponents = {
     }
   },
   getDocumentUrl: function(inDocument) {
-    return inDocument &&
+    return inDocument && 
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
             || inDocument.URL)
@@ -63,7 +63,7 @@ var wc = WebComponents;
 wc.preloadSelectors = wc.preloadSelectors.join(',');
 
 function isDocumentLink(inElt) {
-  return (inElt.localName === 'link'
+  return (inElt.localName === 'link' 
       && inElt.getAttribute('rel') === 'component');
 }
 
@@ -280,9 +280,11 @@ window.addEventListener('load', function() {
   // preload document resource trees
   WebComponents.preload(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
-    var sdocument = window.wrap ? wrap(document) : document;
+    var doc = window.ShadowDOMPolyfill ? 
+          ShadowDOMPolyfill.wrap(document) 
+              : document;
     // send WebComponentsLoaded when finished
-    sdocument.body.dispatchEvent(
+    doc.body.dispatchEvent(
       new CustomEvent('WebComponentsLoaded', {bubbles: true})
     );
   });
