@@ -23,7 +23,7 @@ var WebComponents = {
     // filter out scripts in the main document
     // TODO(sjmiles): do this by altering the selector list instead
     nodes = Array.prototype.filter.call(nodes, function(n) {
-      return wc.isDocumentLink(n) || (n.ownerDocument !== document);
+      return isDocumentLink(n) || !inMainDocument(n);
     });
     // preload all nodes, call inNext when complete, call wc.eachPreload
     // for each preloaded node
@@ -31,7 +31,7 @@ var WebComponents = {
   },
   eachPreload: function(data, next, url, elt) {
     // for document links
-    if (wc.isDocumentLink(elt)) {
+    if (isDocumentLink(elt)) {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
       // resolve resource paths relative to host document
@@ -42,36 +42,58 @@ var WebComponents = {
       WebComponents.preload(document, next);
     } else  {
       // resolve stylesheet resource paths relative to host document
-      if (wc.isStylesheetLink(elt)) {
+      if (isStylesheetLink(elt)) {
         pathResolver.resolveSheet(elt);
       }
       // no preprocessing on other nodes
       next();
     }
   },
-  isDocumentLink: function(inElt) {
-    return wc.isLinkRel(inElt, 'component');
-  },
-  isStylesheetLink: function(inElt) {
-    return wc.isLinkRel(inElt, 'stylesheet');
-  },
-  isLinkRel: function(inElt, inRel) {
-    return (inElt.localName === 'link' 
-        && inElt.getAttribute('rel') === inRel);
+  getDocumentUrl: function(inDocument) {
+    return inDocument &&
+        // TODO(sjmiles): ShadowDOMPolyfill intrusion
+        (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
+            || inDocument.URL)
+                || '';
   }
 };
 
 var wc = WebComponents;
+
 wc.preloadSelectors = wc.preloadSelectors.join(',');
 
-var makeDocument = function(inHTML, inUrl) {
+function isDocumentLink(inElt) {
+  return (inElt.localName === 'link'
+      && inElt.getAttribute('rel') === 'component');
+}
+
+function isDocumentLink(inElt) {
+  return wc.isLinkRel(inElt, 'component');
+}
+
+function isStylesheetLink(inElt) {
+  return wc.isLinkRel(inElt, 'stylesheet');
+}
+
+function isLinkRel(inElt, inRel) {
+  return (inElt.localName === 'link' 
+      && inElt.getAttribute('rel') === inRel);
+}
+
+function inMainDocument(inElt) {
+  return inElt.ownerDocument === document ||
+    // TODO(sjmiles): ShadowDOMPolyfill intrusion
+    inElt.ownerDocument.impl === document;
+}
+
+function makeDocument(inHTML, inUrl) {
   var doc = document.implementation.createHTMLDocument('component');
   doc.body.innerHTML = inHTML;
   doc._URL = inUrl;
   return doc;
-};
+}
 
-loader = {
+var loader = {
   cache: {},
   loadAll: function(inNodes, inNext, inEach) {
     // something to do?
@@ -125,9 +147,7 @@ var path = {
     return this.resolveUrl(this.documentUrlFromNode(inNode), inRelativeUrl);
   },
   documentUrlFromNode: function(inNode) {
-    var d = inNode.ownerDocument;
-    // TODO(sjmiles): ShadowDOM polyfill pollution
-    var url = d && (d._URL || d.URL || (window.unwrap && unwrap(d)._URL)) || '';
+    var url = wc.getDocumentUrl(inNode.ownerDocument);
     // take only the left side if there is a #
     url = url.split('#')[0];
     return url;
