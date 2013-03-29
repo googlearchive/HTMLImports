@@ -194,6 +194,10 @@ var pathResolver = {
       var templates = inRoot.querySelectorAll('template');
       if (templates) {
         forEach(templates, function(t) {
+          // TODO(sjmiles): ShadowDOMPolyfill intrusion
+          if (window.ShadowDOMPolyfill) {
+            t = ShadowDOMPolyfill.wrap(t);
+          } 
           pathResolver._resolve(templateContent(t), inUrl);
         });
       }
