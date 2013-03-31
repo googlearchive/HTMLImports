@@ -104,6 +104,7 @@ var loader = {
     // 'each' and 'tail' are possible continuations
     function head(inElt) {
       var url = path.nodeUrl(inElt);
+      inElt.__nodeUrl = url;
       var resource = loader.cache[url];
       if (resource) {
         inElt.__resource = resource;
