@@ -65,7 +65,7 @@ window.logFlags = logFlags;
 
 // support exportas directive
 
-scope = scope || {};
+scope = scope || window;
 
 if (flags.exportas) {
   window[flags.exportas] = scope;
