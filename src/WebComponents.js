@@ -196,7 +196,7 @@ var pathResolver = {
       if (templates) {
         forEach(templates, function(t) {
           // TODO(sjmiles): ShadowDOMPolyfill intrusion
-          if (window.ShadowDOMPolyfill) {
+          if (window.ShadowDOMPolyfill && !t.impl) {
             t = ShadowDOMPolyfill.wrap(t);
           } 
           pathResolver._resolve(templateContent(t), inUrl);
