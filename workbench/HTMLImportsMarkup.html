@@ -8,14 +8,15 @@ license that can be found in the LICENSE file.
   <head>
     <title></title>
     <meta charset="UTF-8">
-    <script src="../web-components.js"></script>
-    <link rel="component" href="components/markup-component.html">
+    <script src="../html-imports.js"></script>
+    <link rel="import" href="components/markup-component.html">
   </head>
   <body>
     <script>
-      window.addEventListener('WebComponentsLoaded', function() {
-        console.dir(WebComponents.cache);
+      window.addEventListener('HTMLImportsLoaded', function() {
+        console.dir(HTMLImports.cache);
         console.log('done');
+        
         var link = document.querySelector('link');
         console.log(link.__resource);
         var img = link.__resource.querySelector('img');
@@ -26,9 +27,8 @@ license that can be found in the LICENSE file.
         style.textContent = sheet.__resource;
         document.head.appendChild(style);
         var div = document.createElement('div');
-        div.className = "mail";
+        div.className = 'mail';
         document.body.appendChild(div);
-        
       });
     </script>
   </body>

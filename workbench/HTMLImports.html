@@ -8,13 +8,13 @@ license that can be found in the LICENSE file.
   <head>
     <title></title>
     <meta charset="UTF-8">
-    <script src="../web-components.js"></script>
-    <link rel="component" href="test-component.html">
+    <script src="../html-imports.js"></script>
+    <link rel="import" href="test-component.html">
   </head>
   <body>
     <script>
-      window.addEventListener('WebComponentsLoaded', function() {
-        console.dir(WebComponents.cache);
+      window.addEventListener('HTMLImportsLoaded', function() {
+        console.dir(HTMLImports.cache);
         console.log('done');
       });
     </script>

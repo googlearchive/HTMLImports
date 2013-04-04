@@ -5,7 +5,7 @@
  */
 module.exports = function(grunt) {
   HTMLComponents = [
-    'src/HTMLComponents.js'
+    'src/HTMLImports.js'
   ];
   grunt.initConfig({
     uglify: {
@@ -16,7 +16,7 @@ module.exports = function(grunt) {
         },
         */
         files: {
-          'html-components.min.js': HTMLComponents
+          'html-imports.min.js': HTMLComponents
         }
       }
     },

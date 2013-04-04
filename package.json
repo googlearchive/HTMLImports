@@ -1,6 +1,6 @@
 {
-  "name": "HTMLComponents",
-  "description": "Polyfill for W3C HTMLComponents Specification",
+  "name": "HTMLImports",
+  "description": "Polyfill for W3C HTMLImports Specification",
   "version": "0.0.1",
   "devDependencies": {
     "grunt": "*",

@@ -5,29 +5,31 @@
  */
 
 (function() {
-  
+
+var IMPORT_LINK_TYPE = 'import';
+
 // highlander object represents a primary document (the argument to 'parse')
 // at the root of a tree of documents
 
-var WebComponents = {
+var HTMLImports = {
   preloadSelectors: [
-    'link[rel=component]',
+    'link[rel=' + IMPORT_LINK_TYPE + ']',
     'script[src]',
     'link[rel=stylesheet]'
   ],
   preload: function(inDocument, inNext) {
-    // alias the loader cache in WebComponents
-    wc.cache = loader.cache;
+    // alias the loader cache
+    hi.cache = loader.cache;
     // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(wc.preloadSelectors);
+    var nodes = inDocument.querySelectorAll(hi.preloadSelectors);
     // filter out scripts in the main document
     // TODO(sjmiles): do this by altering the selector list instead
     nodes = Array.prototype.filter.call(nodes, function(n) {
       return isDocumentLink(n) || !inMainDocument(n);
     });
-    // preload all nodes, call inNext when complete, call wc.eachPreload
+    // preload all nodes, call inNext when complete, call hi.eachPreload
     // for each preloaded node
-    loader.loadAll(nodes, inNext, wc.eachPreload);
+    loader.loadAll(nodes, inNext, hi.eachPreload);
   },
   eachPreload: function(data, next, url, elt) {
     // for document links
@@ -35,40 +37,27 @@ var WebComponents = {
       // generate an HTMLDocument from data
       var document = makeDocument(data, url);
       // resolve resource paths relative to host document
-      pathResolver.resolve(document);
+      path.resolveHTML(document);
       // store document resource
-      elt.component = elt.__resource = loader.cache[url] = document;
+      elt.content = elt.__resource = loader.cache[url] = document;
       // re-enters preloader here
-      WebComponents.preload(document, next);
+      HTMLImports.preload(document, next);
     } else  {
       // resolve stylesheet resource paths relative to host document
       if (isStylesheetLink(elt)) {
-        pathResolver.resolveSheet(elt);
+        path.resolveSheet(elt);
       }
       // no preprocessing on other nodes
       next();
     }
-  },
-  getDocumentUrl: function(inDocument) {
-    return inDocument && 
-        // TODO(sjmiles): ShadowDOMPolyfill intrusion
-        (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
-            || inDocument.URL)
-                || '';
   }
 };
 
-var wc = WebComponents;
-
-wc.preloadSelectors = wc.preloadSelectors.join(',');
-
-function isDocumentLink(inElt) {
-  return (inElt.localName === 'link' 
-      && inElt.getAttribute('rel') === 'component');
-}
+var hi = HTMLImports;
+hi.preloadSelectors = hi.preloadSelectors.join(',');
 
 function isDocumentLink(inElt) {
-  return isLinkRel(inElt, 'component');
+  return isLinkRel(inElt, IMPORT_LINK_TYPE);
 }
 
 function isStylesheetLink(inElt) {
@@ -87,9 +76,20 @@ function inMainDocument(inElt) {
 }
 
 function makeDocument(inHTML, inUrl) {
-  var doc = document.implementation.createHTMLDocument('component');
-  doc.body.innerHTML = inHTML;
+  // create a new HTML document
+  var doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
+  // cache the new document's source url
   doc._URL = inUrl;
+  // establish a relative path via <base>
+  var base = doc.createElement('base'); 
+  base.setAttribute('href', document.baseURI); 
+  // TODO(sjmiles): ShadowDOMPolyfill intrusion
+  if (window.ShadowDOMPolyfill) {
+    base = ShadowDOMPolyfill.unwrap(base);
+  }
+  doc.head.appendChild(base);
+  // install html
+  doc.body.innerHTML = inHTML;
   return doc;
 }
 
@@ -148,10 +148,17 @@ var path = {
     return this.resolveUrl(this.documentUrlFromNode(inNode), inRelativeUrl);
   },
   documentUrlFromNode: function(inNode) {
-    var url = wc.getDocumentUrl(inNode.ownerDocument);
+    var url = path.getDocumentUrl(inNode.ownerDocument);
     // take only the left side if there is a #
     url = url.split('#')[0];
     return url;
+  },
+  getDocumentUrl: function(inDocument) {
+    return inDocument && 
+        // TODO(sjmiles): ShadowDOMPolyfill intrusion
+        (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
+            || inDocument.URL)
+                || '';
   },
   resolveUrl: function(inBaseUrl, inUrl) {
     if (this.isAbsUrl(inUrl)) {
@@ -178,18 +185,14 @@ var path = {
       }
     }
     return parts.join("/");
-  }
-};
-
-// Path resolution helper to ensure resource paths are resolved correctly
-var pathResolver = {
-  resolve: function(inRoot) {
-    var docUrl = path.documentUrlFromNode(inRoot.body);
-    pathResolver._resolve(inRoot.body, docUrl);
   },
-  _resolve: function(inRoot, inUrl) {
-    pathResolver.resolveAttributes(inRoot, inUrl);
-    pathResolver.resolveStyleElts(inRoot, inUrl);
+  resolveHTML: function(inRoot) {
+    var docUrl = path.documentUrlFromNode(inRoot.body);
+    path._resolveHTML(inRoot.body, docUrl);
+  },
+  _resolveHTML: function(inRoot, inUrl) {
+    path.resolveAttributes(inRoot, inUrl);
+    path.resolveStyleElts(inRoot, inUrl);
     // handle templates, if supported
     if (window.templateContent) {
       var templates = inRoot.querySelectorAll('template');
@@ -199,9 +202,21 @@ var pathResolver = {
           if (window.ShadowDOMPolyfill && !t.impl) {
             t = ShadowDOMPolyfill.wrap(t);
           } 
-          pathResolver._resolve(templateContent(t), inUrl);
+          path._resolveHTML(templateContent(t), inUrl);
         });
       }
+    }
+  },
+  resolveSheet: function(inSheet) {
+    var docUrl = path.nodeUrl(inSheet);
+    inSheet.__resource = path.resolveCssText(inSheet.__resource, docUrl);
+  },
+  resolveStyleElts: function(inRoot, inUrl) {
+    var styles = inRoot.querySelectorAll('style');
+    if (styles) {
+      forEach(styles, function(style) {
+        style.textContent = path.resolveCssText(style.textContent, inUrl);
+      });
     }
   },
   resolveCssText: function(inCssText, inBaseUrl) {
@@ -211,18 +226,6 @@ var pathResolver = {
       urlPath = path.resolveUrl(inBaseUrl, urlPath);
       return "url(" + urlPath + ")";
     });
-  },
-  resolveSheet: function(inSheet) {
-    var docUrl = path.nodeUrl(inSheet);
-    inSheet.__resource = pathResolver.resolveCssText(inSheet.__resource, docUrl);
-  },
-  resolveStyleElts: function(inRoot, inUrl) {
-    var styles = inRoot.querySelectorAll('style');
-    if (styles) {
-      forEach(styles, function(style) {
-        style.textContent = pathResolver.resolveCssText(style.textContent, inUrl);
-      });
-    }
   },
   resolveAttributes: function(inRoot, inUrl) {
     // search for attributes that host urls
@@ -268,7 +271,7 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
 
-window.WebComponents = WebComponents;
+window.HTMLImports = HTMLImports;
 
 // bootstrap
 
@@ -281,16 +284,18 @@ if (typeof window.CustomEvent !== 'function') {
   };
 }
 
-window.addEventListener('load', function() {
+// TODO(sjmiles): https://github.com/toolkitchen/ShadowDOM/issues/76
+var ael = window.addEventListener_ || window.addEventListener;
+
+ael.call(window, 'load', function() {
   // preload document resource trees
-  WebComponents.preload(document, function() {
+  HTMLImports.preload(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
-    var doc = window.ShadowDOMPolyfill ? 
-          ShadowDOMPolyfill.wrap(document) 
-              : document;
-    // send WebComponentsLoaded when finished
+    var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document) 
+        : document;
+    // send HTMLImportsLoaded when finished
     doc.body.dispatchEvent(
-      new CustomEvent('WebComponentsLoaded', {bubbles: true})
+      new CustomEvent('HTMLImportsLoaded', {bubbles: true})
     );
   });
 });

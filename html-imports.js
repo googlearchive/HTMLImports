@@ -6,7 +6,7 @@
 
 (function(scope) {
 
-var thisFile = 'web-components.js';
+var thisFile = 'html-imports.js';
 
 // NOTE: use attributes on the script tag for this file as directives
 
@@ -83,7 +83,7 @@ console.log(flags);
 // write script tags for dependencies
 
 [
-  'src/WebComponents.js'
+  'src/HTMLImports.js'
 ].forEach(function(inSrc) {
   document.write('<script src="' + base + inSrc + '"></script>');
 });
