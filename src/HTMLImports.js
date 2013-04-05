@@ -139,13 +139,10 @@ var loader = {
 
 var path = {
   nodeUrl: function(inNode) {
-    return path.resolveNodeUrl(inNode, path.hrefOrSrc(inNode));
+    return path.resolveUrl(document.URL, path.hrefOrSrc(inNode));
   },
   hrefOrSrc: function(inNode) {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
-  },
-  resolveNodeUrl: function(inNode, inRelativeUrl) {
-    return this.resolveUrl(this.documentUrlFromNode(inNode), inRelativeUrl);
   },
   documentUrlFromNode: function(inNode) {
     var url = path.getDocumentUrl(inNode.ownerDocument);
@@ -160,11 +157,15 @@ var path = {
             || inDocument.URL)
                 || '';
   },
-  resolveUrl: function(inBaseUrl, inUrl) {
+  resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
     if (this.isAbsUrl(inUrl)) {
       return inUrl;
     }
-    return this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
+    var url = this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
+    if (inRelativeToDocument) {
+      url = path.makeRelPath(document.URL, url);
+    }
+    return url;
   },
   isAbsUrl: function(inUrl) {
     return /(^data:)|(^http[s]?:)|(^\/)/.test(inUrl);
@@ -185,6 +186,21 @@ var path = {
       }
     }
     return parts.join("/");
+  },
+  // make a relative path from source to target
+  makeRelPath: function(inSource, inTarget) {
+    var s, t;
+    s = this.compressUrl(inSource).split("/");
+    t = this.compressUrl(inTarget).split("/");
+    while (s.length && s[0] === t[0]){
+      s.shift();
+      t.shift();
+    }
+    for(var i = 0, l = s.length-1; i < l; i++) {
+      t.unshift("..");
+    }
+    var r = t.join("/");
+    return r;
   },
   resolveHTML: function(inRoot) {
     var docUrl = path.documentUrlFromNode(inRoot.body);
@@ -223,7 +239,7 @@ var path = {
     return inCssText.replace(/url\([^)]*\)/g, function(inMatch) {
       // find the url path, ignore quotes in url string
       var urlPath = inMatch.replace(/["']/g, "").slice(4, -1);
-      urlPath = path.resolveUrl(inBaseUrl, urlPath);
+      urlPath = path.resolveUrl(inBaseUrl, urlPath, true);
       return "url(" + urlPath + ")";
     });
   },
@@ -232,20 +248,24 @@ var path = {
     var nodes = inRoot && inRoot.querySelectorAll(URL_ATTRS_SELECTOR);
     if (nodes) {
       forEach(nodes, function(n) {
-        URL_ATTRS.forEach(function(v) {
-          var attr = n.attributes[v];
-          if (attr && attr.value && 
-             (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
-            attr.value = path.resolveUrl(inUrl, attr.value);
-          }
-        });
-      });
+        this.resolveNodeAttributes(n, inUrl);
+      }, this);
     }
+  },
+  resolveNodeAttributes: function(inNode, inUrl) {
+    URL_ATTRS.forEach(function(v) {
+      var attr = inNode.attributes[v];
+      if (attr && attr.value && 
+         (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
+        var urlPath = path.resolveUrl(inUrl, attr.value, true);
+        attr.value = urlPath;
+      }
+    });
   }
 }
 
 var URL_ATTRS = ['href', 'src', 'action'];
-var URL_ATTRS_SELECTOR = ':not(link)[' + URL_ATTRS.join('],[') + ']';
+var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
 var URL_TEMPLATE_SEARCH = '{{.*}}';
 
 var xhr = {
