@@ -83,10 +83,6 @@ function makeDocument(inHTML, inUrl) {
   // establish a relative path via <base>
   var base = doc.createElement('base'); 
   base.setAttribute('href', document.baseURI); 
-  // TODO(sjmiles): ShadowDOMPolyfill intrusion
-  if (window.ShadowDOMPolyfill) {
-    base = ShadowDOMPolyfill.unwrap(base);
-  }
   doc.head.appendChild(base);
   // install html
   doc.body.innerHTML = inHTML;
@@ -304,10 +300,7 @@ if (typeof window.CustomEvent !== 'function') {
   };
 }
 
-// TODO(sjmiles): https://github.com/toolkitchen/ShadowDOM/issues/76
-var ael = window.addEventListener_ || window.addEventListener;
-
-ael.call(window, 'load', function() {
+window.addEventListener('load', function() {
   // preload document resource trees
   HTMLImports.preload(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
