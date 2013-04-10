@@ -4,6 +4,7 @@
  * license that can be found in the LICENSE file.
  */
 
+// if standalone
 if (window.top === window) {
   // if standalone
   window.done = function() {
@@ -15,23 +16,17 @@ if (window.top === window) {
   window.onerror = function(x) {
     var d = document.createElement('pre');
     d.style.cssText = 'padding: 6px; background-color: #FFE0E0;';
-    d.textContent = 'FAILED: ' + x + '\n\n' + lastError.stack;
+    d.textContent = 'FAILED: ' + x;
     document.body.insertBefore(d, document.body.firstChild);
   };
-} else {
-  // if part of a test suite
+} else
+// if part of a test suite
+{
   window.done = function() {
-    top.postMessage('ok', '*');
+    parent.postMessage('ok', '*');
   }
   window.onerror = function(x) {
-    top.postMessage(x + '=> [' + lastError.stack + ']', '*');
-    top.postMessage(x, '*');
+    parent.postMessage({error: x}, '*');
   };
 }
 
-[
-  '../../node_modules/chai/chai.js',
-  '../lib/after-chai.js'
-].forEach(function(inSrc) {
-  document.write('<script src="' + inSrc + '"></script>');
-});
