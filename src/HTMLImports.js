@@ -97,6 +97,8 @@ function makeDocument(inHTML, inUrl) {
   return doc;
 }
 
+var loader;
+
 var Loader = function(inOnLoad, inOnComplete) {
   this.onload = inOnLoad;
   this.oncomplete = inOnComplete;
