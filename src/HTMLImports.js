@@ -255,7 +255,7 @@ var path = {
           if (window.ShadowDOMPolyfill && !t.impl) {
             t = ShadowDOMPolyfill.wrap(t);
           }
-          path._resolveHTML(templateContent(t), inUrl);
+          path._resolvePathsInHTML(templateContent(t), inUrl);
         });
       }
     }
