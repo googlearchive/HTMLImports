@@ -12,49 +12,58 @@ var IMPORT_LINK_TYPE = 'import';
 // at the root of a tree of documents
 
 var HTMLImports = {
+  documents: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'script[src]',
     'link[rel=stylesheet]'
-  ],
-  preload: function(inDocument, inNext) {
-    // alias the loader cache
-    hi.cache = loader.cache;
-    // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(hi.preloadSelectors);
-    // filter out scripts in the main document
-    // TODO(sjmiles): do this by altering the selector list instead
-    nodes = Array.prototype.filter.call(nodes, function(n) {
-      return isDocumentLink(n) || !inMainDocument(n);
-    });
-    // preload all nodes, call inNext when complete, call hi.eachPreload
-    // for each preloaded node
-    loader.loadAll(nodes, inNext, hi.eachPreload);
+  ].join(','),
+  load: function(inDocument, inNext) {
+    // construct a loader instance
+    loader = new Loader(HTMLImports.loaded, inNext);
+    // alias the loader cache (for debugging)
+    HTMLImports.cache = loader.cache;
+    // add nodes from document into loader queue
+    HTMLImports.preload(inDocument);
   },
-  eachPreload: function(data, next, url, elt) {
-    // for document links
-    if (isDocumentLink(elt)) {
-      // generate an HTMLDocument from data
-      var document = makeDocument(data, url);
-      // resolve resource paths relative to host document
-      path.resolveHTML(document);
-      // store document resource
-      elt.content = elt.__resource = loader.cache[url] = document;
-      // re-enters preloader here
-      HTMLImports.preload(document, next);
-    } else  {
-      // resolve stylesheet resource paths relative to host document
-      if (isStylesheetLink(elt)) {
-        path.resolveSheet(elt);
+  preload: function(inDocument) {
+    // all preloadable nodes in inDocument
+    var nodes = inDocument.querySelectorAll(HTMLImports.preloadSelectors);
+    // only load imports from the main document
+    // TODO(sjmiles): do this by altering the selector list instead
+    if (inDocument === document) {
+      nodes = Array.prototype.filter.call(nodes, function(n) {
+        return isDocumentLink(n);
+      });
+    }
+    // add these nodes to loader's queue
+    loader.addNodes(nodes);
+  },
+  loaded: function(inUrl, inElt, inResource) {
+    if (isDocumentLink(inElt)) {
+      var document = HTMLImports.documents[inUrl];
+      // if we've never seen a document at this url
+      if (!document) {
+        // generate an HTMLDocument from data
+        document = makeDocument(inResource, inUrl);
+        // resolve resource paths relative to host document
+        path.resolvePathsInHTML(document);
+        // cache document
+        HTMLImports.documents[inUrl] = document;
+        // add nodes from this document to the loader queue
+        HTMLImports.preload(document);
       }
-      // no preprocessing on other nodes
-      next();
+      // store document resource
+      inElt.content = inElt.__resource = document;
+    } else {
+      inElt.__resource = inResource;
+      // resolve stylesheet resource paths relative to host document
+      if (isStylesheetLink(inElt)) {
+        path.resolvePathsInStylesheet(inElt);
+      }
     }
   }
 };
-
-var hi = HTMLImports;
-hi.preloadSelectors = hi.preloadSelectors.join(',');
 
 function isDocumentLink(inElt) {
   return isLinkRel(inElt, IMPORT_LINK_TYPE);
@@ -65,8 +74,7 @@ function isStylesheetLink(inElt) {
 }
 
 function isLinkRel(inElt, inRel) {
-  return (inElt.localName === 'link' 
-      && inElt.getAttribute('rel') === inRel);
+  return (inElt.localName === 'link' && inElt.getAttribute('rel') === inRel);
 }
 
 function inMainDocument(inElt) {
@@ -81,55 +89,86 @@ function makeDocument(inHTML, inUrl) {
   // cache the new document's source url
   doc._URL = inUrl;
   // establish a relative path via <base>
-  var base = doc.createElement('base'); 
-  base.setAttribute('href', document.baseURI); 
+  var base = doc.createElement('base');
+  base.setAttribute('href', document.baseURI);
   doc.head.appendChild(base);
   // install html
   doc.body.innerHTML = inHTML;
   return doc;
 }
 
-var loader = {
-  cache: {},
-  loadAll: function(inNodes, inNext, inEach) {
-    // something to do?
-    if (!inNodes.length) {
-      inNext();
-    }
-    // begin async load of resource described by inElt
-    // 'each' and 'tail' are possible continuations
-    function head(inElt) {
-      var url = path.nodeUrl(inElt);
-      inElt.__nodeUrl = url;
-      var resource = loader.cache[url];
-      if (resource) {
-        inElt.__resource = resource;
-        tail();
-      } else {
-        xhr.load(url, function(err, resource, url) {
-          if (err) {
-            tail();
-          } else {
-            inElt.__resource = loader.cache[url] = resource;
-            each(resource, tail, url, inElt);
-          }
-        });
-      }
-    }
-    // when a resource load is complete, decrement the count
-    // of inflight loads and process the next one
-    function tail() {
-      if (!--inflight) {
-        inNext();
-      }
-    }
-    // inEach function is optional 'before' advice for tail
-    // inEach must call it's 'next' argument
-    var each = inEach || tail;
+var Loader = function(inOnLoad, inOnComplete) {
+  this.onload = inOnLoad;
+  this.oncomplete = inOnComplete;
+  this.inflight = 0;
+  this.pending = {};
+  this.cache = {};
+};
+
+Loader.prototype = {
+  addNodes: function(inNodes) {
     // number of transactions to complete
-    var inflight = inNodes.length;
-    // begin async loading
-    forEach(inNodes, head);
+    this.inflight += inNodes.length;
+    // commence transactions
+    forEach(inNodes, this.require, this);
+    // anything to do?
+    this.checkDone();
+  },
+  require: function(inElt) {
+    var url = path.nodeUrl(inElt);
+    // TODO(sjmiles): ad-hoc
+    inElt.__nodeUrl = url;
+    // deduplication
+    if (!this.dedupe(url, inElt)) {
+      // fetch this resource
+      this.fetch(url, inElt);
+    }
+  },
+  dedupe: function(inUrl, inElt) {
+    if (this.pending[inUrl]) {
+      // add to list of nodes waiting for inUrl
+      this.pending[inUrl].push(inElt);
+      // don't need fetch
+      return true;
+    }
+    if (this.cache[inUrl]) {
+      // complete load using cache data
+      this.onload(inElt, inUrl, loader.cache[inUrl]);
+      // finished this transaction
+      this.tail();
+      // don't need fetch
+      return true;
+    }
+    // first node waiting for inUrl
+    this.pending[inUrl] = [inElt];
+    // need fetch (not a dupe)
+    return false;
+  },
+  fetch: function(inUrl, inElt) {
+    xhr.load(inUrl, function(err, resource) {
+      this.receive(inUrl, inElt, err, resource);
+    }.bind(this));
+  },
+  receive: function(inUrl, inElt, inErr, inResource) {
+    if (!inErr) {
+      loader.cache[inUrl] = inResource;
+    }
+    loader.pending[inUrl].forEach(function(e) {
+      if (!inErr) {
+        this.onload(inUrl, inElt, inResource);
+      }
+      this.tail();
+    }, this);
+    loader.pending[inUrl] = null;
+  },
+  tail: function() {
+    --this.inflight;
+    this.checkDone();
+  },
+  checkDone: function() {
+    if (!this.inflight) {
+      this.oncomplete();
+    }
   }
 };
 
@@ -147,7 +186,7 @@ var path = {
     return url;
   },
   getDocumentUrl: function(inDocument) {
-    return inDocument && 
+    return inDocument &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
             || inDocument.URL)
@@ -198,11 +237,11 @@ var path = {
     var r = t.join("/");
     return r;
   },
-  resolveHTML: function(inRoot) {
+  resolvePathsInHTML: function(inRoot) {
     var docUrl = path.documentUrlFromNode(inRoot.body);
-    path._resolveHTML(inRoot.body, docUrl);
+    path._resolvePathsInHTML(inRoot.body, docUrl);
   },
-  _resolveHTML: function(inRoot, inUrl) {
+  _resolvePathsInHTML: function(inRoot, inUrl) {
     path.resolveAttributes(inRoot, inUrl);
     path.resolveStyleElts(inRoot, inUrl);
     // handle templates, if supported
@@ -213,13 +252,13 @@ var path = {
           // TODO(sjmiles): ShadowDOMPolyfill intrusion
           if (window.ShadowDOMPolyfill && !t.impl) {
             t = ShadowDOMPolyfill.wrap(t);
-          } 
+          }
           path._resolveHTML(templateContent(t), inUrl);
         });
       }
     }
   },
-  resolveSheet: function(inSheet) {
+  resolvePathsInStylesheet: function(inSheet) {
     var docUrl = path.nodeUrl(inSheet);
     inSheet.__resource = path.resolveCssText(inSheet.__resource, docUrl);
   },
@@ -251,14 +290,14 @@ var path = {
   resolveNodeAttributes: function(inNode, inUrl) {
     URL_ATTRS.forEach(function(v) {
       var attr = inNode.attributes[v];
-      if (attr && attr.value && 
+      if (attr && attr.value &&
          (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
         var urlPath = path.resolveUrl(inUrl, attr.value, true);
         attr.value = urlPath;
       }
     });
   }
-}
+};
 
 var URL_ATTRS = ['href', 'src', 'action'];
 var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
@@ -302,9 +341,9 @@ if (typeof window.CustomEvent !== 'function') {
 
 window.addEventListener('load', function() {
   // preload document resource trees
-  HTMLImports.preload(document, function() {
+  HTMLImports.load(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
-    var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document) 
+    var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document)
         : document;
     // send HTMLImportsLoaded when finished
     doc.body.dispatchEvent(
