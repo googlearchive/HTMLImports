@@ -135,7 +135,7 @@ Loader.prototype = {
     }
     if (this.cache[inUrl]) {
       // complete load using cache data
-      this.onload(inElt, inUrl, loader.cache[inUrl]);
+      this.onload(inUrl, inElt, loader.cache[inUrl]);
       // finished this transaction
       this.tail();
       // don't need fetch
@@ -157,7 +157,7 @@ Loader.prototype = {
     }
     loader.pending[inUrl].forEach(function(e) {
       if (!inErr) {
-        this.onload(inUrl, inElt, inResource);
+        this.onload(inUrl, e, inResource);
       }
       this.tail();
     }, this);
