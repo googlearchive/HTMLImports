@@ -242,7 +242,7 @@ var path = {
   resolvePathsInHTML: function(inRoot) {
     var docUrl = path.documentUrlFromNode(inRoot.body);
     // TODO(sorvell): MDV Polyfill Intrusion
-    if (HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
+    if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
       HTMLTemplateElement.bootstrap(inRoot);
     }
     var node = inRoot.body;
