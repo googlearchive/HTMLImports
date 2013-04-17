@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>HTML Imports Test</title>
-    <script src="../../lib/test/htmltest.js"></script>
+    <script src="../../tools/test/htmltest.js"></script>
     <script src="../../node_modules/chai/chai.js"></script>
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/import-1.html">
@@ -19,6 +19,17 @@
           'must cache exactly five resources');
         chai.assert.equal(4, Object.keys(HTMLImports.documents).length,
           'must cache exactly four documents');
+
+        Object.keys(HTMLImports.documents).forEach(function(key) {
+          var doc = HTMLImports.documents[key];
+          var links = doc.querySelectorAll('link[rel=import]');
+          Array.prototype.forEach.call(links, function(link) {
+            var href = link.getAttribute('href');
+            if (href.indexOf('404') <= 0) {
+              chai.assert.isDefined(link.content, 'import should have content');
+            }
+          });
+        })
         done();
       });
     </script>
