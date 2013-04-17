@@ -135,7 +135,7 @@ Loader.prototype = {
     }
     if (this.cache[inUrl]) {
       // complete load using cache data
-      this.onload(inElt, inUrl, loader.cache[inUrl]);
+      this.onload(inUrl, inElt, loader.cache[inUrl]);
       // finished this transaction
       this.tail();
       // don't need fetch
@@ -157,7 +157,7 @@ Loader.prototype = {
     }
     loader.pending[inUrl].forEach(function(e) {
       if (!inErr) {
-        this.onload(inUrl, inElt, inResource);
+        this.onload(inUrl, e, inResource);
       }
       this.tail();
     }, this);
@@ -241,7 +241,16 @@ var path = {
   },
   resolvePathsInHTML: function(inRoot) {
     var docUrl = path.documentUrlFromNode(inRoot.body);
-    path._resolvePathsInHTML(inRoot.body, docUrl);
+    // TODO(sorvell): MDV Polyfill Intrusion
+    if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
+      HTMLTemplateElement.bootstrap(inRoot);
+    }
+    var node = inRoot.body;
+    // TODO(sorvell): ShadowDOM Polyfill Intrusion
+    if ( window.ShadowDOMPolyfill) {
+      node = ShadowDOMPolyfill.wrap(node);
+    }
+    path._resolvePathsInHTML(node, docUrl);
   },
   _resolvePathsInHTML: function(inRoot, inUrl) {
     path.resolveAttributes(inRoot, inUrl);
@@ -251,10 +260,6 @@ var path = {
       var templates = inRoot.querySelectorAll('template');
       if (templates) {
         forEach(templates, function(t) {
-          // TODO(sjmiles): ShadowDOMPolyfill intrusion
-          if (window.ShadowDOMPolyfill && !t.impl) {
-            t = ShadowDOMPolyfill.wrap(t);
-          }
           path._resolvePathsInHTML(templateContent(t), inUrl);
         });
       }
