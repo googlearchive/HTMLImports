@@ -176,7 +176,7 @@ Loader.prototype = {
 
 var path = {
   nodeUrl: function(inNode) {
-    return path.resolveUrl(document.URL, path.hrefOrSrc(inNode));
+    return path.resolveUrl(path.getDocumentUrl(document), path.hrefOrSrc(inNode));
   },
   hrefOrSrc: function(inNode) {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
@@ -200,7 +200,7 @@ var path = {
     }
     var url = this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
     if (inRelativeToDocument) {
-      url = path.makeRelPath(document.URL, url);
+      url = path.makeRelPath(path.getDocumentUrl(document), url);
     }
     return url;
   },
@@ -332,8 +332,8 @@ var xhr = {
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
-
 window.HTMLImports = HTMLImports;
+window.HTMLImports.getDocumentUrl = path.getDocumentUrl;
 
 // bootstrap
 
