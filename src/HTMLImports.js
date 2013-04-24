@@ -13,6 +13,7 @@ var IMPORT_LINK_TYPE = 'import';
 
 var HTMLImports = {
   documents: {},
+  cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'script[src]',
@@ -22,7 +23,7 @@ var HTMLImports = {
     // construct a loader instance
     loader = new Loader(HTMLImports.loaded, inNext);
     // alias the loader cache (for debugging)
-    HTMLImports.cache = loader.cache;
+    loader.cache = HTMLImports.cache;
     // add nodes from document into loader queue
     HTMLImports.preload(inDocument);
   },
