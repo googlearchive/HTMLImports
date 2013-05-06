@@ -247,10 +247,6 @@ var path = {
       HTMLTemplateElement.bootstrap(inRoot);
     }
     var node = inRoot.body;
-    // TODO(sorvell): ShadowDOM Polyfill Intrusion
-    if ( window.ShadowDOMPolyfill) {
-      node = ShadowDOMPolyfill.wrap(node);
-    }
     path._resolvePathsInHTML(node, docUrl);
   },
   _resolvePathsInHTML: function(inRoot, inUrl) {
