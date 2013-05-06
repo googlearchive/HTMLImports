@@ -353,6 +353,7 @@ window.addEventListener('load', function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
     var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document)
         : document;
+    HTMLImports.readyTime = new Date().getTime();
     // send HTMLImportsLoaded when finished
     doc.body.dispatchEvent(
       new CustomEvent('HTMLImportsLoaded', {bubbles: true})
