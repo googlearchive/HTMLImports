@@ -3,11 +3,14 @@
   "description": "Polyfill for W3C HTMLImports Specification",
   "version": "0.0.1",
   "devDependencies": {
-    "grunt": "*",
-    "grunt-contrib-uglify": "*",
     "mocha": "*",
     "chai": "*",
+    "grunt": "*",
+    "grunt-contrib-uglify": "*",
     "grunt-contrib-yuidoc": "~0.4.0",
-    "grunt-karma": "*"
+    "grunt-karma-0.9.1": "~0.4.3",
+    "karma-mocha": "*",
+    "karma-script-launcher": "*",
+    "karma-crbot-reporter": "*"
   }
 }

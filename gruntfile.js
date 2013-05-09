@@ -4,6 +4,9 @@
  * license that can be found in the LICENSE file.
  */
 module.exports = function(grunt) {
+  HTMLComponents = [
+    'src/HTMLImports.js'
+  ];
   // karma setup
   var browsers;
   (function() {
@@ -15,6 +18,7 @@ module.exports = function(grunt) {
     } catch (e) {
       var os = require('os');
       browsers = ['Chrome', 'Firefox'];
+      //browsers = ['Chrome'];
       if (os.type() === 'Darwin') {
         browsers.push('ChromeCanary');
       }
@@ -23,15 +27,19 @@ module.exports = function(grunt) {
       }
     }
   })();
-  HTMLComponents = [
-    'src/HTMLImports.js'
-  ];
   grunt.initConfig({
     karma: {
-      HTMLImports: {
+      options: {
         configFile: 'conf/karma.conf.js',
-        browsers: browsers,
         keepalive: true
+      },
+      buildbot: {
+        browsers: browsers,
+        reporters: ['crbot'],
+        logLevel: 'OFF'
+      },
+      HTMLImports: {
+        browsers: browsers
       }
     },
     uglify: {
@@ -68,12 +76,13 @@ module.exports = function(grunt) {
   // plugins
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-yuidoc');
-  grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-karma-0.9.1');
 
   // tasks
   grunt.registerTask('default', ['uglify']);
   grunt.registerTask('minify', ['uglify']);
   grunt.registerTask('docs', ['yuidoc']);
-  grunt.registerTask('test', ['karma']);
+  grunt.registerTask('test', ['karma:HTMLImports']);
+  grunt.registerTask('test-buildbot', ['karma:buildbot']);
 };
 

@@ -13,6 +13,7 @@ var IMPORT_LINK_TYPE = 'import';
 
 var HTMLImports = {
   documents: {},
+  cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'script[src]',
@@ -22,7 +23,7 @@ var HTMLImports = {
     // construct a loader instance
     loader = new Loader(HTMLImports.loaded, inNext);
     // alias the loader cache (for debugging)
-    HTMLImports.cache = loader.cache;
+    loader.cache = HTMLImports.cache;
     // add nodes from document into loader queue
     HTMLImports.preload(inDocument);
   },
@@ -176,7 +177,7 @@ Loader.prototype = {
 
 var path = {
   nodeUrl: function(inNode) {
-    return path.resolveUrl(document.URL, path.hrefOrSrc(inNode));
+    return path.resolveUrl(path.getDocumentUrl(document), path.hrefOrSrc(inNode));
   },
   hrefOrSrc: function(inNode) {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
@@ -200,7 +201,7 @@ var path = {
     }
     var url = this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
     if (inRelativeToDocument) {
-      url = path.makeRelPath(document.URL, url);
+      url = path.makeRelPath(path.getDocumentUrl(document), url);
     }
     return url;
   },
@@ -246,10 +247,6 @@ var path = {
       HTMLTemplateElement.bootstrap(inRoot);
     }
     var node = inRoot.body;
-    // TODO(sorvell): ShadowDOM Polyfill Intrusion
-    if ( window.ShadowDOMPolyfill) {
-      node = ShadowDOMPolyfill.wrap(node);
-    }
     path._resolvePathsInHTML(node, docUrl);
   },
   _resolvePathsInHTML: function(inRoot, inUrl) {
@@ -332,8 +329,8 @@ var xhr = {
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
-
 window.HTMLImports = HTMLImports;
+window.HTMLImports.getDocumentUrl = path.getDocumentUrl;
 
 // bootstrap
 
@@ -352,6 +349,7 @@ window.addEventListener('load', function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
     var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document)
         : document;
+    HTMLImports.readyTime = new Date().getTime();
     // send HTMLImportsLoaded when finished
     doc.body.dispatchEvent(
       new CustomEvent('HTMLImportsLoaded', {bubbles: true})
