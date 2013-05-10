@@ -192,7 +192,7 @@ var path = {
     return inDocument &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
-            || inDocument.URL)
+            || inDocument.baseURI || inDocument.URL)
                 || '';
   },
   resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
