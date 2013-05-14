@@ -41,4 +41,4 @@ The polyfill loads linked stylesheets, external scripts, and nested linked impor
 
 ## Tools & Testing
 
-For running tests or building minified files, consult the [tooling information](http://polymer-project.appspot.com/tooling-strategy.html).
+For running tests or building minified files, consult the [tooling information](http://polymer-project.org/tooling-strategy.html).
