@@ -31,11 +31,11 @@ The HTML Imports polyfill begins processing link tags when the `window.load` eve
 
 Example:
 
-	<script>
-		window.addEventListener('HTMLImportsLoaded', function() {
-			// all imports loaded
-		});
-	</script>.
+    <script>
+    window.addEventListener('HTMLImportsLoaded', function() {
+      // all imports loaded
+    });
+    </script>
 
 The polyfill loads linked stylesheets, external scripts, and nested linked imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/Polymer/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
 
