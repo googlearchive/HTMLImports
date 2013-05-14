@@ -4,7 +4,7 @@
 
 This repository contains a Javascript polyfill for the [HTML Imports](https://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/imports/index.html) specification.
 
-HTML Imports are a way to include and reuse HTML documents in other HTML documents. As `<script>` tags let authors include external Javascript in their pages, imports let authors load full HTML resources.  In particular, imports let authors include [Custom Element](https://github.com/toolkitchen/CustomElements) definitions from external URLs.
+HTML Imports are a way to include and reuse HTML documents in other HTML documents. As `<script>` tags let authors include external Javascript in their pages, imports let authors load full HTML resources.  In particular, imports let authors include [Custom Element](https://github.com/polymer-project/CustomElements) definitions from external URLs.
 
 ### Basic usage
 
@@ -37,8 +37,8 @@ Example:
 		});
 	</script>.
 
-The polyfill loads linked stylesheets, external scripts, and nested linked imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/toolkitchen/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
+The polyfill loads linked stylesheets, external scripts, and nested linked imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/polymer-project/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
 
 ## Tools & Testing
 
-For running tests or building minified files, consult the [tooling information](http://toolkitchen.github.com/tooling-strategy.html).
+For running tests or building minified files, consult the [tooling information](http://polymer-project.github.com/tooling-strategy.html).
