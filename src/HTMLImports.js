@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 The Toolkitchen Authors. All rights reserved.
+ * Copyright 2013 The Polymer Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -192,7 +192,7 @@ var path = {
     return inDocument &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
-            || inDocument.URL)
+            || inDocument.baseURI || inDocument.URL)
                 || '';
   },
   resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
