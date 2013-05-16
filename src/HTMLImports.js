@@ -4,14 +4,18 @@
  * license that can be found in the LICENSE file.
  */
 
-(function() {
+(function(scope) {
+
+if (!scope) {
+  scope = window.HTMLImports = {flags:{}};
+}
 
 var IMPORT_LINK_TYPE = 'import';
 
 // highlander object represents a primary document (the argument to 'parse')
 // at the root of a tree of documents
 
-var HTMLImports = {
+var importer = {
   documents: {},
   cache: {},
   preloadSelectors: [
@@ -21,15 +25,15 @@ var HTMLImports = {
   ].join(','),
   load: function(inDocument, inNext) {
     // construct a loader instance
-    loader = new Loader(HTMLImports.loaded, inNext);
+    loader = new Loader(importer.loaded, inNext);
     // alias the loader cache (for debugging)
-    loader.cache = HTMLImports.cache;
+    loader.cache = importer.cache;
     // add nodes from document into loader queue
-    HTMLImports.preload(inDocument);
+    importer.preload(inDocument);
   },
   preload: function(inDocument) {
     // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(HTMLImports.preloadSelectors);
+    var nodes = inDocument.querySelectorAll(importer.preloadSelectors);
     // only load imports from the main document
     // TODO(sjmiles): do this by altering the selector list instead
     if (inDocument === document) {
@@ -42,7 +46,7 @@ var HTMLImports = {
   },
   loaded: function(inUrl, inElt, inResource) {
     if (isDocumentLink(inElt)) {
-      var document = HTMLImports.documents[inUrl];
+      var document = importer.documents[inUrl];
       // if we've never seen a document at this url
       if (!document) {
         // generate an HTMLDocument from data
@@ -50,9 +54,9 @@ var HTMLImports = {
         // resolve resource paths relative to host document
         path.resolvePathsInHTML(document);
         // cache document
-        HTMLImports.documents[inUrl] = document;
+        importer.documents[inUrl] = document;
         // add nodes from this document to the loader queue
-        HTMLImports.preload(document);
+        importer.preload(document);
       }
       // store document resource
       inElt.content = inElt.__resource = document;
@@ -315,7 +319,10 @@ var xhr = {
   },
   load: function(url, next, nextContext) {
     var request = new XMLHttpRequest();
-    request.open('GET', url + '?' + Math.random(), xhr.async);
+    if (scope.flags.debug || scope.flags.bust) {
+      url += '?' + Math.random();
+    }
+    request.open('GET', url, xhr.async);
     request.addEventListener('readystatechange', function(e) {
       if (request.readyState === 4) {
         next.call(nextContext, !xhr.ok(request) && request,
@@ -329,8 +336,9 @@ var xhr = {
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
-window.HTMLImports = HTMLImports;
-window.HTMLImports.getDocumentUrl = path.getDocumentUrl;
+
+scope.importer = importer;
+scope.getDocumentUrl = path.getDocumentUrl;
 
 // bootstrap
 
@@ -345,7 +353,7 @@ if (typeof window.CustomEvent !== 'function') {
 
 window.addEventListener('load', function() {
   // preload document resource trees
-  HTMLImports.load(document, function() {
+  importer.load(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
     var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document)
         : document;
@@ -357,4 +365,4 @@ window.addEventListener('load', function() {
   });
 });
 
-})();
+})(window.HTMLImports);
