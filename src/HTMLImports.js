@@ -315,7 +315,8 @@ var xhr = {
   async: true,
   ok: function(inRequest) {
     return (inRequest.status >= 200 && inRequest.status < 300)
-        || (inRequest.status === 304);
+        || (inRequest.status === 304)
+        || (inRequest.status === 0);
   },
   load: function(url, next, nextContext) {
     var request = new XMLHttpRequest();
