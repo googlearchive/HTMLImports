@@ -187,17 +187,16 @@ var path = {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
   },
   documentUrlFromNode: function(inNode) {
-    var url = path.getDocumentUrl(inNode.ownerDocument);
-    // take only the left side if there is a #
-    url = url.split('#')[0];
-    return url;
+    return path.getDocumentUrl(inNode.ownerDocument);
   },
   getDocumentUrl: function(inDocument) {
-    return inDocument &&
+    var url = inDocument &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
             || inDocument.baseURI || inDocument.URL)
                 || '';
+    // take only the left side if there is a #
+    return url.split('#')[0];
   },
   resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
     if (this.isAbsUrl(inUrl)) {
