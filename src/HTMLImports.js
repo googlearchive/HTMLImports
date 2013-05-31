@@ -351,7 +351,7 @@ if (typeof window.CustomEvent !== 'function') {
   };
 }
 
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
   // preload document resource trees
   importer.load(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
