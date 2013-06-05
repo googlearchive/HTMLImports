@@ -187,17 +187,16 @@ var path = {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
   },
   documentUrlFromNode: function(inNode) {
-    var url = path.getDocumentUrl(inNode.ownerDocument);
-    // take only the left side if there is a #
-    url = url.split('#')[0];
-    return url;
+    return path.getDocumentUrl(inNode.ownerDocument);
   },
   getDocumentUrl: function(inDocument) {
-    return inDocument &&
+    var url = inDocument &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
         (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
             || inDocument.baseURI || inDocument.URL)
                 || '';
+    // take only the left side if there is a #
+    return url.split('#')[0];
   },
   resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
     if (this.isAbsUrl(inUrl)) {
@@ -311,11 +310,12 @@ var URL_ATTRS = ['href', 'src', 'action'];
 var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
 var URL_TEMPLATE_SEARCH = '{{.*}}';
 
-var xhr = {
+var xhr = scope.xhr || {
   async: true,
   ok: function(inRequest) {
     return (inRequest.status >= 200 && inRequest.status < 300)
-        || (inRequest.status === 304);
+        || (inRequest.status === 304)
+        || (inRequest.status === 0);
   },
   load: function(url, next, nextContext) {
     var request = new XMLHttpRequest();
@@ -337,6 +337,7 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
 
+scope.xhr = xhr;
 scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
 
@@ -351,7 +352,7 @@ if (typeof window.CustomEvent !== 'function') {
   };
 }
 
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
   // preload document resource trees
   importer.load(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
