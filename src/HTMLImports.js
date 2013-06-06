@@ -357,7 +357,7 @@ if (typeof window.CustomEvent !== 'function') {
   };
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function bootstrap() {
   // preload document resource trees
   importer.load(document, function() {
     // TODO(sjmiles): ShadowDOM polyfill pollution
@@ -369,6 +369,12 @@ document.addEventListener('DOMContentLoaded', function() {
       new CustomEvent('HTMLImportsLoaded', {bubbles: true})
     );
   });
-});
+};
+
+if (document.readyState === 'complete') {
+  boostrap();
+} else {
+  window.addEventListener('DOMContentLoaded', bootstrap);
+}
 
 })(window.HTMLImports);
