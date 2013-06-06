@@ -23,11 +23,16 @@ var importer = {
     'script[src]',
     'link[rel=stylesheet]'
   ].join(','),
-  load: function(inDocument, inNext) {
+  loader: function(inNext) {
     // construct a loader instance
     loader = new Loader(importer.loaded, inNext);
     // alias the loader cache (for debugging)
     loader.cache = importer.cache;
+    return loader;
+  },
+  load: function(inDocument, inNext) {
+    // construct a loader instance
+    loader = importer.loader(inNext);
     // add nodes from document into loader queue
     importer.preload(inDocument);
   },
