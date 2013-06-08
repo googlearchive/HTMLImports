@@ -371,8 +371,8 @@ function bootstrap() {
   });
 };
 
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  boostrap();
+if (document.readyState === 'complete') {
+  bootstrap();
 } else {
   window.addEventListener('DOMContentLoaded', bootstrap);
 }
