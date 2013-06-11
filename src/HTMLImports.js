@@ -127,8 +127,14 @@ function isStylesheetLink(elt) {
 }
 
 function isLinkRel(elt, rel) {
-  return (elt.localName === 'link' && elt.getAttribute('rel') === rel);
+  return elt.localName === 'link' && elt.getAttribute('rel') === rel;
 }
+
+/*
+function isScript(elt) {
+  return elt.localName === 'script';
+}
+*/
 
 function makeDocument(inHTML, inUrl) {
   // create a new HTML document
@@ -197,11 +203,34 @@ Loader.prototype = {
     // need fetch (not a dupe)
     return false;
   },
-  fetch: function(inUrl, inElt) {
-    xhr.load(inUrl, function(err, resource) {
-      this.receive(inUrl, inElt, err, resource);
-    }.bind(this));
-  },
+  fetch: function(url, elt) {
+    //if (isScript(elt)) {
+    //  this.script(elt);
+    //} else {
+      var receiveXhr = function(err, resource) {
+        this.receive(url, elt, err, resource);
+      }.bind(this);
+      xhr.load(url, receiveXhr);
+    //}
+  },/*
+  script: function(elt) {
+    console.log('loading', elt);
+    var tail = this.tail.bind(this);
+    var script = document.createElement('script');
+    if (elt.hasAttribute('src')) {
+      script.src = elt.getAttribute('src');
+      script.async = false;
+      script.addEventListener('load', function() {
+        console.log('loaded', elt);
+        tail();
+      });
+      script.addEventListener('error', function() {
+        console.log('error', elt);
+        tail();
+      });
+      document.head.appendChild(script);
+    }
+  },*/
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
       loader.cache[inUrl] = inResource;

@@ -15,7 +15,6 @@ var importParser = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'link[rel=stylesheet]',
     'style',
-    'script[src]',
     'script'
   ],
   map: {
@@ -35,11 +34,6 @@ var importParser = {
       });
     }
   },
-  parseGeneric: function(elt) {
-    if (needsMainDocumentContext(elt)) {
-      document.head.appendChild(elt);
-    }
-  },
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
       if (linkElt.content) {
@@ -47,6 +41,11 @@ var importParser = {
       }
     } else {
       this.parseGeneric(linkElt);
+    }
+  },
+  parseGeneric: function(elt) {
+    if (needsMainDocumentContext(elt)) {
+      document.head.appendChild(elt);
     }
   },
   parseScript: function(scriptElt) {
