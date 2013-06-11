@@ -29,7 +29,7 @@ function bootstrap() {
 };
 
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  boostrap();
+  bootstrap();
 } else {
   window.addEventListener('DOMContentLoaded', bootstrap);
 }
