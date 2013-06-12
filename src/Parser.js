@@ -53,7 +53,7 @@ var importParser = {
       // evaluate now
       var code = scriptElt.__resource || scriptElt.textContent;
       if (code) {
-        code += "\n//@ sourceURL=" + (scriptElt.__nodeUrl || ('inline' + '[' + Math.floor((Math.random()+1)*1000) + ']')) + "\n";
+        code += "\n//# sourceURL=" + (scriptElt.__nodeUrl || ('inline' + '[' + Math.floor((Math.random()+1)*1000) + ']')) + "\n";
         eval.call(window, code);
       }
     }
