@@ -24,7 +24,16 @@ var IMPORT_LINK_TYPE = 'import';
 // for any document, importer:
 // - loads any linked documents (with deduping), modifies paths and feeds them back into importer
 // - loads text of external script tags
-// - loads text of external style tags inside of <element>
+// - loads text of external style tags inside of <element>, modifies paths
+
+// when importer 'modifies paths' in a document, this includes
+// - href/src/action in node attributes
+// - paths in inline stylesheets
+// - all content inside templates
+
+// linked style sheets in an import have their own path fixed up when their containing import modifies paths
+// linked style sheets in an <element> are loaded, and the content gets path fixups
+// inline style sheets get path fixups when their containing import modifies paths
 
 var importer = {
   documents: {},
@@ -130,12 +139,6 @@ function isLinkRel(elt, rel) {
   return elt.localName === 'link' && elt.getAttribute('rel') === rel;
 }
 
-/*
-function isScript(elt) {
-  return elt.localName === 'script';
-}
-*/
-
 function makeDocument(inHTML, inUrl) {
   // create a new HTML document
   var doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
@@ -204,33 +207,11 @@ Loader.prototype = {
     return false;
   },
   fetch: function(url, elt) {
-    //if (isScript(elt)) {
-    //  this.script(elt);
-    //} else {
-      var receiveXhr = function(err, resource) {
-        this.receive(url, elt, err, resource);
-      }.bind(this);
-      xhr.load(url, receiveXhr);
-    //}
-  },/*
-  script: function(elt) {
-    console.log('loading', elt);
-    var tail = this.tail.bind(this);
-    var script = document.createElement('script');
-    if (elt.hasAttribute('src')) {
-      script.src = elt.getAttribute('src');
-      script.async = false;
-      script.addEventListener('load', function() {
-        console.log('loaded', elt);
-        tail();
-      });
-      script.addEventListener('error', function() {
-        console.log('error', elt);
-        tail();
-      });
-      document.head.appendChild(script);
-    }
-  },*/
+    var receiveXhr = function(err, resource) {
+      this.receive(url, elt, err, resource);
+    }.bind(this);
+    xhr.load(url, receiveXhr);
+  },
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
       loader.cache[inUrl] = inResource;
