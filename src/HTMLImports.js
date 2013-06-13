@@ -17,6 +17,7 @@ var xhr = scope.xhr;
 // importer
 
 var IMPORT_LINK_TYPE = 'import';
+var STYLE_LINK_TYPE = 'stylesheet';
 
 // highlander object represents a primary document (the argument to 'load')
 // at the root of a tree of documents
@@ -40,7 +41,7 @@ var importer = {
   cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
-    'element link[rel=stylesheet]',
+    'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
     'script[src]'
   ].join(','),
@@ -71,7 +72,7 @@ var importer = {
   filterMainDocumentNodes: function(inDocument, nodes) {
     if (inDocument === document) {
       nodes = Array.prototype.filter.call(nodes, function(n) {
-        return isDocumentLink(n);
+        return !isScript(n);
       });
     }
     return nodes;
@@ -81,7 +82,8 @@ var importer = {
     nodes = Array.prototype.filter.call(nodes, function(n) {
       if (n.localName === 'template') {
         if (n.content) {
-          var l$ = n.content.querySelectorAll('link[rel=stylesheet]');
+          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE + 
+            ']');
           if (l$.length) {
             extra = extra.concat(Array.prototype.slice.call(l$, 0)); 
           }
@@ -119,6 +121,8 @@ var importer = {
       elt.content = resource = document;
     }
     // store generic resource
+    // TODO(sorvell): fails for nodes inside <template>.content
+    // see https://code.google.com/p/chromium/issues/detail?id=249381.
     elt.__resource = resource;
     // css path fixups
     if (isStylesheetLink(elt)) {
@@ -132,11 +136,15 @@ function isDocumentLink(elt) {
 }
 
 function isStylesheetLink(elt) {
-  return isLinkRel(elt, 'stylesheet');
+  return isLinkRel(elt, STYLE_LINK_TYPE);
 }
 
 function isLinkRel(elt, rel) {
   return elt.localName === 'link' && elt.getAttribute('rel') === rel;
+}
+
+function isScript(elt) {
+  return elt.localName === 'script';
 }
 
 function makeDocument(inHTML, inUrl) {
@@ -307,14 +315,14 @@ var path = {
     url = url || path.documentUrlFromNode(root)
     path.resolveAttributes(root, url);
     path.resolveStyleElts(root, url);
-    // handle templates, if supported
-    if (window.templateContent) {
-      var templates = root.querySelectorAll('template');
-      if (templates) {
-        forEach(templates, function(t) {
-          path.resolvePathsInHTML(templateContent(t), url);
-        });
-      }
+    // handle template.content
+    var templates = root.querySelectorAll('template');
+    if (templates) {
+      forEach(templates, function(t) {
+        if (t.content) {
+          path.resolvePathsInHTML(t.content, url);
+        }
+      });
     }
   },
   resolvePathsInStylesheet: function(inSheet) {
