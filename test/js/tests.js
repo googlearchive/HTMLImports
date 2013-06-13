@@ -7,4 +7,5 @@
 htmlSuite('HTMLImports', function() {
   htmlTest('html/HTMLImports.html');
   htmlTest('html/parser.html');
+  htmlTest('html/style-links.html');
 });
