@@ -10,82 +10,141 @@ if (!scope) {
   scope = window.HTMLImports = {flags:{}};
 }
 
-var IMPORT_LINK_TYPE = 'import';
+// imports
 
-// highlander object represents a primary document (the argument to 'parse')
+var xhr = scope.xhr;
+
+// importer
+
+var IMPORT_LINK_TYPE = 'import';
+var STYLE_LINK_TYPE = 'stylesheet';
+
+// highlander object represents a primary document (the argument to 'load')
 // at the root of a tree of documents
+
+// for any document, importer:
+// - loads any linked documents (with deduping), modifies paths and feeds them back into importer
+// - loads text of external script tags
+// - loads text of external style tags inside of <element>, modifies paths
+
+// when importer 'modifies paths' in a document, this includes
+// - href/src/action in node attributes
+// - paths in inline stylesheets
+// - all content inside templates
+
+// linked style sheets in an import have their own path fixed up when their containing import modifies paths
+// linked style sheets in an <element> are loaded, and the content gets path fixups
+// inline style sheets get path fixups when their containing import modifies paths
 
 var importer = {
   documents: {},
   cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
-    'script[src]',
-    'link[rel=stylesheet]'
+    'element link[rel=' + STYLE_LINK_TYPE + ']',
+    'template',
+    'script[src]'
   ].join(','),
-  load: function(inDocument, inNext) {
+  loader: function(inNext) {
     // construct a loader instance
     loader = new Loader(importer.loaded, inNext);
     // alias the loader cache (for debugging)
     loader.cache = importer.cache;
+    return loader;
+  },
+  load: function(inDocument, inNext) {
+    // construct a loader instance
+    loader = importer.loader(inNext);
     // add nodes from document into loader queue
     importer.preload(inDocument);
   },
   preload: function(inDocument) {
     // all preloadable nodes in inDocument
     var nodes = inDocument.querySelectorAll(importer.preloadSelectors);
-    // only load imports from the main document
+    // from the main document, only load imports
     // TODO(sjmiles): do this by altering the selector list instead
-    if (inDocument === document) {
-      nodes = Array.prototype.filter.call(nodes, function(n) {
-        return isDocumentLink(n);
-      });
-    }
+    nodes = this.filterMainDocumentNodes(inDocument, nodes);
+    // extra link nodes from templates, filter templates out of the nodes list
+    nodes = this.extractTemplateNodes(nodes);
     // add these nodes to loader's queue
     loader.addNodes(nodes);
   },
-  loaded: function(inUrl, inElt, inResource) {
-    if (isDocumentLink(inElt)) {
-      var document = importer.documents[inUrl];
+  filterMainDocumentNodes: function(inDocument, nodes) {
+    if (inDocument === document) {
+      nodes = Array.prototype.filter.call(nodes, function(n) {
+        return !isScript(n);
+      });
+    }
+    return nodes;
+  },
+  extractTemplateNodes: function(nodes) {
+    var extra = [];
+    nodes = Array.prototype.filter.call(nodes, function(n) {
+      if (n.localName === 'template') {
+        if (n.content) {
+          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE + 
+            ']');
+          if (l$.length) {
+            extra = extra.concat(Array.prototype.slice.call(l$, 0)); 
+          }
+        }
+        return false;
+      }
+      return true;
+    });
+    if (extra.length) {
+      nodes = nodes.concat(extra);
+    }
+    return nodes;
+  },
+  loaded: function(url, elt, resource) {
+    if (isDocumentLink(elt)) {
+      var document = importer.documents[url];
       // if we've never seen a document at this url
       if (!document) {
         // generate an HTMLDocument from data
-        document = makeDocument(inResource, inUrl);
+        document = makeDocument(resource, url);
         // resolve resource paths relative to host document
-        path.resolvePathsInHTML(document);
+        path.resolvePathsInHTML(document.body);
         // cache document
-        importer.documents[inUrl] = document;
+        importer.documents[url] = document;
         // add nodes from this document to the loader queue
         importer.preload(document);
       }
+      // store import record
+      elt.import = {
+        href: url,
+        ownerNode: elt,
+        content: document
+      };
       // store document resource
-      inElt.content = inElt.__resource = document;
-    } else {
-      inElt.__resource = inResource;
-      // resolve stylesheet resource paths relative to host document
-      if (isStylesheetLink(inElt)) {
-        path.resolvePathsInStylesheet(inElt);
-      }
+      elt.content = resource = document;
+    }
+    // store generic resource
+    // TODO(sorvell): fails for nodes inside <template>.content
+    // see https://code.google.com/p/chromium/issues/detail?id=249381.
+    elt.__resource = resource;
+    // css path fixups
+    if (isStylesheetLink(elt)) {
+      path.resolvePathsInStylesheet(elt);
     }
   }
 };
 
-function isDocumentLink(inElt) {
-  return isLinkRel(inElt, IMPORT_LINK_TYPE);
+function isDocumentLink(elt) {
+  return isLinkRel(elt, IMPORT_LINK_TYPE);
 }
 
-function isStylesheetLink(inElt) {
-  return isLinkRel(inElt, 'stylesheet');
+function isStylesheetLink(elt) {
+  return isLinkRel(elt, STYLE_LINK_TYPE);
 }
 
-function isLinkRel(inElt, inRel) {
-  return (inElt.localName === 'link' && inElt.getAttribute('rel') === inRel);
+function isLinkRel(elt, rel) {
+  return elt.localName === 'link' && elt.getAttribute('rel') === rel;
 }
 
-function inMainDocument(inElt) {
-  return inElt.ownerDocument === document ||
-    // TODO(sjmiles): ShadowDOMPolyfill intrusion
-    inElt.ownerDocument.impl === document;
+function isScript(elt) {
+  return elt.localName === 'script';
 }
 
 function makeDocument(inHTML, inUrl) {
@@ -99,6 +158,10 @@ function makeDocument(inHTML, inUrl) {
   doc.head.appendChild(base);
   // install html
   doc.body.innerHTML = inHTML;
+  // TODO(sorvell): MDV Polyfill intrusion: boostrap template polyfill
+  if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
+    HTMLTemplateElement.bootstrap(doc);
+  }
   return doc;
 }
 
@@ -151,10 +214,11 @@ Loader.prototype = {
     // need fetch (not a dupe)
     return false;
   },
-  fetch: function(inUrl, inElt) {
-    xhr.load(inUrl, function(err, resource) {
-      this.receive(inUrl, inElt, err, resource);
-    }.bind(this));
+  fetch: function(url, elt) {
+    var receiveXhr = function(err, resource) {
+      this.receive(url, elt, err, resource);
+    }.bind(this);
+    xhr.load(url, receiveXhr);
   },
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
@@ -178,6 +242,10 @@ Loader.prototype = {
     }
   }
 };
+
+var URL_ATTRS = ['href', 'src', 'action'];
+var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
+var URL_TEMPLATE_SEARCH = '{{.*}}';
 
 var path = {
   nodeUrl: function(inNode) {
@@ -243,26 +311,18 @@ var path = {
     var r = t.join("/");
     return r;
   },
-  resolvePathsInHTML: function(inRoot) {
-    var docUrl = path.documentUrlFromNode(inRoot.body);
-    // TODO(sorvell): MDV Polyfill Intrusion
-    if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
-      HTMLTemplateElement.bootstrap(inRoot);
-    }
-    var node = inRoot.body;
-    path._resolvePathsInHTML(node, docUrl);
-  },
-  _resolvePathsInHTML: function(inRoot, inUrl) {
-    path.resolveAttributes(inRoot, inUrl);
-    path.resolveStyleElts(inRoot, inUrl);
-    // handle templates, if supported
-    if (window.templateContent) {
-      var templates = inRoot.querySelectorAll('template');
-      if (templates) {
-        forEach(templates, function(t) {
-          path._resolvePathsInHTML(templateContent(t), inUrl);
-        });
-      }
+  resolvePathsInHTML: function(root, url) {
+    url = url || path.documentUrlFromNode(root)
+    path.resolveAttributes(root, url);
+    path.resolveStyleElts(root, url);
+    // handle template.content
+    var templates = root.querySelectorAll('template');
+    if (templates) {
+      forEach(templates, function(t) {
+        if (t.content) {
+          path.resolvePathsInHTML(t.content, url);
+        }
+      });
     }
   },
   resolvePathsInStylesheet: function(inSheet) {
@@ -306,11 +366,7 @@ var path = {
   }
 };
 
-var URL_ATTRS = ['href', 'src', 'action'];
-var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
-var URL_TEMPLATE_SEARCH = '{{.*}}';
-
-var xhr = scope.xhr || {
+xhr = xhr || {
   async: true,
   ok: function(inRequest) {
     return (inRequest.status >= 200 && inRequest.status < 300)
@@ -340,30 +396,6 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 scope.xhr = xhr;
 scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
-
-// bootstrap
-
-// IE shim for CustomEvent
-if (typeof window.CustomEvent !== 'function') {
-  window.CustomEvent = function(inType) {
-     var e = document.createEvent('HTMLEvents');
-     e.initEvent(inType, true, true);
-     return e;
-  };
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  // preload document resource trees
-  importer.load(document, function() {
-    // TODO(sjmiles): ShadowDOM polyfill pollution
-    var doc = window.ShadowDOMPolyfill ? ShadowDOMPolyfill.wrap(document)
-        : document;
-    HTMLImports.readyTime = new Date().getTime();
-    // send HTMLImportsLoaded when finished
-    doc.body.dispatchEvent(
-      new CustomEvent('HTMLImportsLoaded', {bubbles: true})
-    );
-  });
-});
+scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 
 })(window.HTMLImports);
