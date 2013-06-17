@@ -9,7 +9,9 @@
 var thisFile = 'html-imports.js';
 var scopeName = 'HTMLImports';
 var modules = [
-    'src/HTMLImports.js'
+    'src/Parser.js',
+    'src/HTMLImports.js',
+    'src/boot.js'
 ];
 
 // export 

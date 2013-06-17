@@ -18,7 +18,7 @@ For HTML imports use the `import` relation on a standard `<link>` tag, for examp
 
 Include the `html-imports.js` or `html-imports.min.js` (minified) file in your project.
 
-  	<script src="HTMLImports/html-imports.js"></script>
+    <script src="HTMLImports/html-imports.js"></script>
 
 `html-imports.js` is the debug loader and uses `document.write` to load additional modules. 
 Use the minified version (`html-imports.min.js`) if you need to load the file dynamically.
