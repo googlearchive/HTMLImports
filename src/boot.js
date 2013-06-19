@@ -28,7 +28,7 @@ function bootstrap() {
   });
 };
 
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
+if (document.readyState === 'complete') {
   bootstrap();
 } else {
   window.addEventListener('DOMContentLoaded', bootstrap);
