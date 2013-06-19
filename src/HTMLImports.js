@@ -393,9 +393,10 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
 
+scope.path = path;
 scope.xhr = xhr;
 scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 
-})(window.HTMLImports);
+})(HTMLImports);
