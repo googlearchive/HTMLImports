@@ -27,7 +27,7 @@ Use the minified version (`html-imports.min.js`) if you need to load the file dy
 
 In imported documents, `href` and `src` attributes in HTML, and `url` properties in CSS files, are relative to the location of the imported document, not the main document.
 
-The HTML Imports polyfill begins processing link tags when the `window.load` event fires. To know when loading is complete, listen for the `HTMLImportsLoaded` event on `document` or `window`.
+The HTML Imports polyfill begins processing link tags when the `DOMContentLoaded` event fires. To know when loading is complete, listen for the `HTMLImportsLoaded` event on `document` or `window`.
 
 Example:
 
