@@ -43,7 +43,9 @@ var importer = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
-    'script[src]'
+    'script[src]',
+    'script:not([type])',
+    'script[type="text/javascript"]'
   ].join(','),
   loader: function(inNext) {
     // construct a loader instance
@@ -82,10 +84,10 @@ var importer = {
     nodes = Array.prototype.filter.call(nodes, function(n) {
       if (n.localName === 'template') {
         if (n.content) {
-          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE + 
+          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE +
             ']');
           if (l$.length) {
-            extra = extra.concat(Array.prototype.slice.call(l$, 0)); 
+            extra = extra.concat(Array.prototype.slice.call(l$, 0));
           }
         }
         return false;
