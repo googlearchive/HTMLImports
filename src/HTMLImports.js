@@ -399,4 +399,4 @@ scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 
-})(HTMLImports);
+})(window.HTMLImports);
