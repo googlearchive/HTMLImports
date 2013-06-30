@@ -15,7 +15,8 @@ var importParser = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'link[rel=stylesheet]',
     'style',
-    'script'
+    'script:not([type])',
+    'script[type="text/javascript"]'
   ],
   map: {
     link: 'parseLink',
