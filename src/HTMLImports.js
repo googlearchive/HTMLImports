@@ -43,9 +43,8 @@ var importer = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
-    'script[src]',
-    'script:not([type])',
-    'script[type="text/javascript"]'
+    'script[src]:not([type])',
+    'script[src][type="text/javascript"]'
   ].join(','),
   loader: function(inNext) {
     // construct a loader instance
