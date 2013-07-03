@@ -106,7 +106,7 @@ var importer = {
         // generate an HTMLDocument from data
         document = makeDocument(resource, url);
         // resolve resource paths relative to host document
-        path.resolvePathsInHTML(document.body);
+        path.resolvePathsInHTML(document);
         // cache document
         importer.documents[url] = document;
         // add nodes from this document to the loader queue
@@ -148,17 +148,20 @@ function isScript(elt) {
   return elt.localName === 'script';
 }
 
-function makeDocument(inHTML, inUrl) {
+function makeDocument(resource, url) {
   // create a new HTML document
-  var doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
+  var doc = resource;
+  if (!doc instanceof Document) {
+    doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
+    // install html
+    doc.body.innerHTML = resource;
+  }
   // cache the new document's source url
-  doc._URL = inUrl;
+  doc._URL = url;
   // establish a relative path via <base>
   var base = doc.createElement('base');
   base.setAttribute('href', document.baseURI);
   doc.head.appendChild(base);
-  // install html
-  doc.body.innerHTML = inHTML;
   // TODO(sorvell): MDV Polyfill intrusion: boostrap template polyfill
   if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
     HTMLTemplateElement.bootstrap(doc);
@@ -219,7 +222,11 @@ Loader.prototype = {
     var receiveXhr = function(err, resource) {
       this.receive(url, elt, err, resource);
     }.bind(this);
-    xhr.load(url, receiveXhr);
+    if (isDocumentLink(elt)) {
+      xhr.loadDocument(url, receiveXhr);
+    } else {
+      xhr.load(url, receiveXhr);
+    }
   },
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
@@ -256,7 +263,7 @@ var path = {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
   },
   documentUrlFromNode: function(inNode) {
-    return path.getDocumentUrl(inNode.ownerDocument);
+    return path.getDocumentUrl(inNode.ownerDocument || inNode);
   },
   getDocumentUrl: function(inDocument) {
     var url = inDocument &&
@@ -387,6 +394,10 @@ xhr = xhr || {
       }
     });
     request.send();
+    return request;
+  },
+  loadDocument: function(url, next, nextContext) {
+    this.load(url, next, nextContext).responseType = 'document';
   }
 };
 
