@@ -4,9 +4,7 @@
  * license that can be found in the LICENSE file.
  */
 module.exports = function(grunt) {
-  HTMLComponents = [
-    'src/HTMLImports.js'
-  ];
+  HTMLComponents = grunt.file.readJSON('build.json');
   // karma setup
   var browsers;
   (function() {
@@ -44,11 +42,10 @@ module.exports = function(grunt) {
     },
     uglify: {
       HTMLComponents: {
-        /*
         options: {
-          sourceMap: 'html-components.min.source-map.js'
+          sourceMap: 'html-components.min.source-map.js',
+          banner: grunt.file.read('LICENSE')
         },
-        */
         files: {
           'html-imports.min.js': HTMLComponents
         }
