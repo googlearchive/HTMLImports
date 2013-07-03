@@ -151,7 +151,7 @@ function isScript(elt) {
 function makeDocument(resource, url) {
   // create a new HTML document
   var doc = resource;
-  if (!doc instanceof Document) {
+  if (!(doc instanceof Document)) {
     doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
     // install html
     doc.body.innerHTML = resource;
