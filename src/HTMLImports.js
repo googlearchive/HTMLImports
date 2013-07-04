@@ -222,11 +222,20 @@ Loader.prototype = {
     var receiveXhr = function(err, resource) {
       this.receive(url, elt, err, resource);
     }.bind(this);
+    xhr.load(url, receiveXhr);
+    // TODO(sorvell): blocked on 
+    // https://code.google.com/p/chromium/issues/detail?id=257221
+    // xhr'ing for a document makes scripts in imports runnable; otherwise
+    // they are not; however, it requires that we have doctype=html in
+    // the import which is unacceptable. This is only needed on Chrome
+    // to avoid the bug above.
+    /*
     if (isDocumentLink(elt)) {
       xhr.loadDocument(url, receiveXhr);
     } else {
       xhr.load(url, receiveXhr);
     }
+    */
   },
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
