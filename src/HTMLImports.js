@@ -43,7 +43,8 @@ var importer = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
-    'script[src]'
+    'script[src]:not([type])',
+    'script[src][type="text/javascript"]'
   ].join(','),
   loader: function(inNext) {
     // construct a loader instance
@@ -82,10 +83,10 @@ var importer = {
     nodes = Array.prototype.filter.call(nodes, function(n) {
       if (n.localName === 'template') {
         if (n.content) {
-          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE + 
+          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE +
             ']');
           if (l$.length) {
-            extra = extra.concat(Array.prototype.slice.call(l$, 0)); 
+            extra = extra.concat(Array.prototype.slice.call(l$, 0));
           }
         }
         return false;
@@ -105,7 +106,7 @@ var importer = {
         // generate an HTMLDocument from data
         document = makeDocument(resource, url);
         // resolve resource paths relative to host document
-        path.resolvePathsInHTML(document.body);
+        path.resolvePathsInHTML(document);
         // cache document
         importer.documents[url] = document;
         // add nodes from this document to the loader queue
@@ -147,17 +148,20 @@ function isScript(elt) {
   return elt.localName === 'script';
 }
 
-function makeDocument(inHTML, inUrl) {
+function makeDocument(resource, url) {
   // create a new HTML document
-  var doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
+  var doc = resource;
+  if (!(doc instanceof Document)) {
+    doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
+    // install html
+    doc.body.innerHTML = resource;
+  }
   // cache the new document's source url
-  doc._URL = inUrl;
+  doc._URL = url;
   // establish a relative path via <base>
   var base = doc.createElement('base');
   base.setAttribute('href', document.baseURI);
   doc.head.appendChild(base);
-  // install html
-  doc.body.innerHTML = inHTML;
   // TODO(sorvell): MDV Polyfill intrusion: boostrap template polyfill
   if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
     HTMLTemplateElement.bootstrap(doc);
@@ -219,6 +223,19 @@ Loader.prototype = {
       this.receive(url, elt, err, resource);
     }.bind(this);
     xhr.load(url, receiveXhr);
+    // TODO(sorvell): blocked on 
+    // https://code.google.com/p/chromium/issues/detail?id=257221
+    // xhr'ing for a document makes scripts in imports runnable; otherwise
+    // they are not; however, it requires that we have doctype=html in
+    // the import which is unacceptable. This is only needed on Chrome
+    // to avoid the bug above.
+    /*
+    if (isDocumentLink(elt)) {
+      xhr.loadDocument(url, receiveXhr);
+    } else {
+      xhr.load(url, receiveXhr);
+    }
+    */
   },
   receive: function(inUrl, inElt, inErr, inResource) {
     if (!inErr) {
@@ -255,7 +272,7 @@ var path = {
     return inNode.getAttribute("href") || inNode.getAttribute("src");
   },
   documentUrlFromNode: function(inNode) {
-    return path.getDocumentUrl(inNode.ownerDocument);
+    return path.getDocumentUrl(inNode.ownerDocument || inNode);
   },
   getDocumentUrl: function(inDocument) {
     var url = inDocument &&
@@ -386,6 +403,10 @@ xhr = xhr || {
       }
     });
     request.send();
+    return request;
+  },
+  loadDocument: function(url, next, nextContext) {
+    this.load(url, next, nextContext).responseType = 'document';
   }
 };
 
@@ -393,6 +414,7 @@ var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 // exports
 
+scope.path = path;
 scope.xhr = xhr;
 scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;

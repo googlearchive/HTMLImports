@@ -15,7 +15,8 @@ var importParser = {
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'link[rel=stylesheet]',
     'style',
-    'script'
+    'script:not([type])',
+    'script[type="text/javascript"]'
   ],
   map: {
     link: 'parseLink',
@@ -50,10 +51,25 @@ var importParser = {
   },
   parseScript: function(scriptElt) {
     if (needsMainDocumentContext(scriptElt)) {
-      // evaluate now
-      var code = scriptElt.__resource || scriptElt.textContent;
+      // acquire code to execute
+      var code = (scriptElt.__resource || scriptElt.textContent).trim();
       if (code) {
-        code += "\n//# sourceURL=" + (scriptElt.__nodeUrl || ('inline' + '[' + Math.floor((Math.random()+1)*1000) + ']')) + "\n";
+        // calculate source map hint
+        var moniker = scriptElt.__nodeUrl;
+        if (!moniker) {
+          var moniker = scope.path.documentUrlFromNode(scriptElt);
+          // there could be more than one script this url
+          var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
+          // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
+          // this sort of thing
+          var matches = code.match(/Polymer\(['"]([^'"]*)/);
+          tag = matches && matches[1] || tag;
+          // tag the moniker
+          moniker += '/' + tag + '.js';
+        }
+        // source map hint
+        code += "\n//# sourceURL=" + moniker + "\n";
+        // evaluate the code
         eval.call(window, code);
       }
     }
@@ -62,9 +78,9 @@ var importParser = {
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
-function isDocumentLink(inElt) {
-  return inElt.localName === 'link'
-      && inElt.getAttribute('rel') === IMPORT_LINK_TYPE;
+function isDocumentLink(elt) {
+  return elt.localName === 'link'
+      && elt.getAttribute('rel') === IMPORT_LINK_TYPE;
 }
 
 function needsMainDocumentContext(node) {
@@ -74,14 +90,14 @@ function needsMainDocumentContext(node) {
       && !isElementElementChild(node);
 }
 
-function inMainDocument(inElt) {
-  return inElt.ownerDocument === document ||
+function inMainDocument(elt) {
+  return elt.ownerDocument === document ||
     // TODO(sjmiles): ShadowDOMPolyfill intrusion
-    inElt.ownerDocument.impl === document;
+    elt.ownerDocument.impl === document;
 }
 
-function isElementElementChild(inElt) {
-  return inElt.parentNode && inElt.parentNode.localName === 'element';
+function isElementElementChild(elt) {
+  return elt.parentNode && elt.parentNode.localName === 'element';
 }
 
 // exports
