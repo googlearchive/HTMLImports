@@ -9,9 +9,9 @@
 var thisFile = 'html-imports.js';
 var scopeName = 'HTMLImports';
 var modules = [
-    'src/Parser.js',
-    'src/HTMLImports.js',
-    'src/boot.js'
+  'src/HTMLImports.js',
+  'src/Parser.js',
+  'src/boot.js'
 ];
 
 // export 
@@ -30,7 +30,7 @@ var basePath = src.slice(0, src.indexOf(thisFile));
 if (!window.Loader) {
   var path = basePath + 'tools/loader/loader.js';
   document.write('<script src="' + path + '"></script>');
-} 
+}
 document.write('<script>Loader.load("' + scopeName + '")</script>');
-  
+
 })();
