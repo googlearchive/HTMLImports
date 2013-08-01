@@ -36,6 +36,8 @@ var STYLE_LINK_TYPE = 'stylesheet';
 // linked style sheets in an <element> are loaded, and the content gets path fixups
 // inline style sheets get path fixups when their containing import modifies paths
 
+var loader;
+
 var importer = {
   documents: {},
   cache: {},
@@ -168,8 +170,6 @@ function makeDocument(resource, url) {
   }
   return doc;
 }
-
-var loader;
 
 var Loader = function(inOnLoad, inOnComplete) {
   this.onload = inOnLoad;

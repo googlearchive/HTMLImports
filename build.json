@@ -1,5 +1,5 @@
 [
-  "src/Parser.js",
   "src/HTMLImports.js",
+  "src/Parser.js",
   "src/boot.js"
 ]
