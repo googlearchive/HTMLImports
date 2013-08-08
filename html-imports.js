@@ -3,9 +3,8 @@
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
-
 (function() {
-  
+
 var thisFile = 'html-imports.js';
 var scopeName = 'HTMLImports';
 var modules = [
@@ -14,7 +13,7 @@ var modules = [
   'src/boot.js'
 ];
 
-// export 
+// export
 
 window[scopeName] = {
   entryPointName: thisFile,

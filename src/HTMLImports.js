@@ -85,8 +85,8 @@ var importer = {
     nodes = Array.prototype.filter.call(nodes, function(n) {
       if (n.localName === 'template') {
         if (n.content) {
-          var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE +
-            ']');
+          var l$ = n.content.querySelectorAll('link[rel='
+            + STYLE_LINK_TYPE + ']');
           if (l$.length) {
             extra = extra.concat(Array.prototype.slice.call(l$, 0));
           }

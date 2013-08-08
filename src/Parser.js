@@ -16,12 +16,14 @@ var importParser = {
     'link[rel=stylesheet]',
     'style',
     'script:not([type])',
-    'script[type="text/javascript"]'
+    'script[type="text/javascript"]',
+    'polymer-element'
   ],
   map: {
     link: 'parseLink',
     script: 'parseScript',
-    style: 'parseGeneric'
+    style: 'parseGeneric',
+    'polymer-element': 'parseElement'
   },
   parse: function(inDocument) {
     if (!inDocument.__importParsed) {
@@ -73,6 +75,10 @@ var importParser = {
         eval.call(window, code);
       }
     }
+  },
+  parseElement: function(elementElement) {
+    console.log('parseElement:', elementElement.getAttribute('name'), '(' + document.URL + ')');
+    elementElement.go();
   }
 };
 
