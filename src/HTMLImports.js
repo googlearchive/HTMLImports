@@ -303,15 +303,22 @@ var path = {
     return parts.join("/");
   },
   compressUrl: function(inUrl) {
-    var parts = inUrl.split("/");
+    var url = inUrl, search = '';
+    var searchPos = url.indexOf('?');
+    // query string should not cound in path compression
+    if (searchPos > -1) {
+      search = url.substring(searchPos);
+      url = url.substring(searchPos, 0);
+    }
+    var parts = url.split('/');
     for (var i=0, p; i<parts.length; i++) {
       p = parts[i];
-      if (p === "..") {
+      if (p === '..') {
         parts.splice(i-1, 2);
         i -= 2;
       }
     }
-    return parts.join("/");
+    return parts.join('/') + search;
   },
   // make a relative path from source to target
   makeRelPath: function(inSource, inTarget) {
