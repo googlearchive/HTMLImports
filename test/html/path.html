@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HTMLImports Path Tests</title>
+  <script src="../../tools/test/htmltest.js"></script>
+  <script src="../../node_modules/chai/chai.js"></script>
+  <script src="../../html-imports.js"></script>
+</head>
+<body>
+  <script>
+  var path = window.HTMLImports.path;
+  var url = 'http://foo/../bar/';
+  chai.assert.equal(path.compressUrl(url), 'http://bar/', 'compressUrl compresses paths');
+
+  url = 'http://foo/bar?baz="foo/../bar"';
+  chai.assert.equal(path.compressUrl(url), url, 'query string is not counted in path compression');
+
+  done();
+  </script>
+</body>
+</html>
