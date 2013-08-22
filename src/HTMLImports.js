@@ -288,7 +288,7 @@ var path = {
       return url;
     }
     url = this.compressUrl(this.urlToPath(baseUrl) + url);
-    if (relativeToDocument && !this.isAbsUrl(url)) {
+    if (relativeToDocument) {
       url = path.makeRelPath(path.getDocumentUrl(document), url);
     }
     return url;
@@ -325,6 +325,10 @@ var path = {
     var s, t;
     s = this.compressUrl(inSource).split("/");
     t = this.compressUrl(inTarget).split("/");
+    // bail if target is not relative to source
+    if (!s.length || s[0] !== t[0]) {
+      return inTarget;
+    }
     while (s.length && s[0] === t[0]){
       s.shift();
       t.shift();

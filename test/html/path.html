@@ -6,6 +6,15 @@
   <script src="../../tools/test/htmltest.js"></script>
   <script src="../../node_modules/chai/chai.js"></script>
   <script src="../../html-imports.js"></script>
+  <script>
+      var parts = window.location.pathname.split('/');
+      parts.pop();
+      var absBase = parts.join('/');
+      var l = document.createElement('link');
+      l.setAttribute('rel', 'import');
+      l.href = absBase + '/imports/abs.html';
+      document.head.appendChild(l);
+    </script>
 </head>
 <body>
   <script>
@@ -16,7 +25,18 @@
   url = 'http://foo/bar?baz="foo/../bar"';
   chai.assert.equal(path.compressUrl(url), url, 'query string is not counted in path compression');
 
-  done();
+  url = '/foo/bar/baz"';
+  chai.assert.equal(path.compressUrl(url), url, 'compressUrl handles url\'s starting with / as abs');
+  document.addEventListener('HTMLImportsLoaded', function() {
+    var i = document.querySelector('[rel=import]');
+    var importDoc = i.import.content;
+    var parts = window.location.href.split('/');
+    parts.pop();
+    parts.pop();
+    var expectedPath = parts.join('/') + '/foo.png';
+    chai.assert.equal(importDoc.querySelector('img').src, expectedPath);
+    done();  
+  });
   </script>
 </body>
 </html>
