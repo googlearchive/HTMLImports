@@ -283,12 +283,12 @@ var path = {
     // take only the left side if there is a #
     return url.split('#')[0];
   },
-  resolveUrl: function(inBaseUrl, inUrl, inRelativeToDocument) {
-    if (this.isAbsUrl(inUrl)) {
-      return inUrl;
+  resolveUrl: function(baseUrl, url, relativeToDocument) {
+    if (this.isAbsUrl(url)) {
+      return url;
     }
-    var url = this.compressUrl(this.urlToPath(inBaseUrl) + inUrl);
-    if (inRelativeToDocument) {
+    url = this.compressUrl(this.urlToPath(baseUrl) + url);
+    if (relativeToDocument && !this.isAbsUrl(url)) {
       url = path.makeRelPath(path.getDocumentUrl(document), url);
     }
     return url;
@@ -305,7 +305,7 @@ var path = {
   compressUrl: function(inUrl) {
     var url = inUrl, search = '';
     var searchPos = url.indexOf('?');
-    // query string should not cound in path compression
+    // query string is not part of the path
     if (searchPos > -1) {
       search = url.substring(searchPos);
       url = url.substring(searchPos, 0);
