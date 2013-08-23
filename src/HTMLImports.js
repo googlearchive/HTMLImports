@@ -162,7 +162,7 @@ function makeDocument(resource, url) {
   doc._URL = url;
   // establish a relative path via <base>
   var base = doc.createElement('base');
-  base.setAttribute('href', document.baseURI);
+  base.setAttribute('href', document.baseURI || document.URL);
   doc.head.appendChild(base);
   // TODO(sorvell): MDV Polyfill intrusion: boostrap template polyfill
   if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
@@ -293,7 +293,7 @@ var path = {
     if (this.isAbsUrl(url)) {
       return url;
     }
-    return path.makeRelPath(path.documentURL, this.resolveUrl(baseUrl, url));
+    return this.makeDocumentRelPath(this.resolveUrl(baseUrl, url));
   },
   isAbsUrl: function(url) {
     return /(^data:)|(^http[s]?:)|(^\/)/.test(url);
@@ -322,15 +322,22 @@ var path = {
     }
     return parts.join('/') + search;
   },
+  makeDocumentRelPath: function(url) {
+    // test url against document to see if we can construct a relative path
+    path.urlElt.href = url;
+    // IE does not set host if same as document
+    if (!path.urlElt.host || 
+        (path.urlElt.host === window.location.host &&
+        path.urlElt.protocol === window.location.protocol)) {
+      return this.makeRelPath(path.documentURL, path.urlElt.href);
+    } else {
+      return url;
+    }
+  },
   // make a relative path from source to target
   makeRelPath: function(source, target) {
-    var s, t;
-    s = this.compressUrl(source).split("/");
-    t = this.compressUrl(target).split("/");
-    // bail if target is not relative to source
-    if (!s.length || s[0] !== t[0]) {
-      return target;
-    }
+    var s = source.split("/");
+    var t = target.split("/");
     while (s.length && s[0] === t[0]){
       s.shift();
       t.shift();
@@ -397,6 +404,7 @@ var path = {
 };
 
 path.documentURL = path.getDocumentUrl(document);
+path.urlElt = document.createElement('a');
 
 xhr = xhr || {
   async: true,

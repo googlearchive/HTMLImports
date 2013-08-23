@@ -12,7 +12,7 @@
       var absBase = parts.join('/');
       var l = document.createElement('link');
       l.setAttribute('rel', 'import');
-      l.href = absBase + '/imports/abs.html';
+      l.setAttribute('href', absBase + '/imports/abs.html');
       document.head.appendChild(l);
     </script>
 </head>
@@ -24,6 +24,16 @@
 
   url = 'http://foo/bar?baz="foo/../bar"';
   chai.assert.equal(path.compressUrl(url), url, 'query string is not counted in path compression');
+
+  url = '../foo.png';
+  chai.assert.equal(path.makeDocumentRelPath(url), url, 'document relative path correctly resolves');
+
+  url = window.location.host + '/zonk/zim/foo.png';
+  chai.assert.equal(path.makeDocumentRelPath(url), url, 'abs / url is relative to document');  
+
+  url = window.location.protocol + '//' + window.location.hostname + ':9999/zonk/zim/foo.png';
+  chai.assert.equal(path.makeDocumentRelPath(url), url, 'other host url is absolute');  
+
 
   url = '/foo/bar/baz"';
   chai.assert.equal(path.compressUrl(url), url, 'compressUrl handles url\'s starting with / as abs');
