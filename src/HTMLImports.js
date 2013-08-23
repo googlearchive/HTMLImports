@@ -48,32 +48,32 @@ var importer = {
     'script[src]:not([type])',
     'script[src][type="text/javascript"]'
   ].join(','),
-  loader: function(inNext) {
+  loader: function(next) {
     // construct a loader instance
-    loader = new Loader(importer.loaded, inNext);
+    loader = new Loader(importer.loaded, next);
     // alias the loader cache (for debugging)
     loader.cache = importer.cache;
     return loader;
   },
-  load: function(inDocument, inNext) {
+  load: function(doc, next) {
     // construct a loader instance
-    loader = importer.loader(inNext);
+    loader = importer.loader(next);
     // add nodes from document into loader queue
-    importer.preload(inDocument);
+    importer.preload(doc);
   },
-  preload: function(inDocument) {
+  preload: function(doc) {
     // all preloadable nodes in inDocument
-    var nodes = inDocument.querySelectorAll(importer.preloadSelectors);
+    var nodes = doc.querySelectorAll(importer.preloadSelectors);
     // from the main document, only load imports
     // TODO(sjmiles): do this by altering the selector list instead
-    nodes = this.filterMainDocumentNodes(inDocument, nodes);
+    nodes = this.filterMainDocumentNodes(doc, nodes);
     // extra link nodes from templates, filter templates out of the nodes list
     nodes = this.extractTemplateNodes(nodes);
     // add these nodes to loader's queue
     loader.addNodes(nodes);
   },
-  filterMainDocumentNodes: function(inDocument, nodes) {
-    if (inDocument === document) {
+  filterMainDocumentNodes: function(doc, nodes) {
+    if (doc === document) {
       nodes = Array.prototype.filter.call(nodes, function(n) {
         return !isScript(n);
       });
@@ -171,50 +171,50 @@ function makeDocument(resource, url) {
   return doc;
 }
 
-var Loader = function(inOnLoad, inOnComplete) {
-  this.onload = inOnLoad;
-  this.oncomplete = inOnComplete;
+var Loader = function(onLoad, onComplete) {
+  this.onload = onLoad;
+  this.oncomplete = onComplete;
   this.inflight = 0;
   this.pending = {};
   this.cache = {};
 };
 
 Loader.prototype = {
-  addNodes: function(inNodes) {
+  addNodes: function(nodes) {
     // number of transactions to complete
-    this.inflight += inNodes.length;
+    this.inflight += nodes.length;
     // commence transactions
-    forEach(inNodes, this.require, this);
+    forEach(nodes, this.require, this);
     // anything to do?
     this.checkDone();
   },
-  require: function(inElt) {
-    var url = path.nodeUrl(inElt);
+  require: function(elt) {
+    var url = path.nodeUrl(elt);
     // TODO(sjmiles): ad-hoc
-    inElt.__nodeUrl = url;
+    elt.__nodeUrl = url;
     // deduplication
-    if (!this.dedupe(url, inElt)) {
+    if (!this.dedupe(url, elt)) {
       // fetch this resource
-      this.fetch(url, inElt);
+      this.fetch(url, elt);
     }
   },
-  dedupe: function(inUrl, inElt) {
-    if (this.pending[inUrl]) {
+  dedupe: function(url, elt) {
+    if (this.pending[url]) {
       // add to list of nodes waiting for inUrl
-      this.pending[inUrl].push(inElt);
+      this.pending[url].push(elt);
       // don't need fetch
       return true;
     }
-    if (this.cache[inUrl]) {
+    if (this.cache[url]) {
       // complete load using cache data
-      this.onload(inUrl, inElt, loader.cache[inUrl]);
+      this.onload(url, elt, loader.cache[url]);
       // finished this transaction
       this.tail();
       // don't need fetch
       return true;
     }
     // first node waiting for inUrl
-    this.pending[inUrl] = [inElt];
+    this.pending[url] = [elt];
     // need fetch (not a dupe)
     return false;
   },
@@ -237,17 +237,17 @@ Loader.prototype = {
     }
     */
   },
-  receive: function(inUrl, inElt, inErr, inResource) {
-    if (!inErr) {
-      loader.cache[inUrl] = inResource;
+  receive: function(url, elt, err, resource) {
+    if (!err) {
+      loader.cache[url] = resource;
     }
-    loader.pending[inUrl].forEach(function(e) {
-      if (!inErr) {
-        this.onload(inUrl, e, inResource);
+    loader.pending[url].forEach(function(e) {
+      if (!err) {
+        this.onload(url, e, resource);
       }
       this.tail();
     }, this);
-    loader.pending[inUrl] = null;
+    loader.pending[url] = null;
   },
   tail: function() {
     --this.inflight;
@@ -265,20 +265,20 @@ var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
 var URL_TEMPLATE_SEARCH = '{{.*}}';
 
 var path = {
-  nodeUrl: function(inNode) {
-    return path.resolveUrl(path.getDocumentUrl(document), path.hrefOrSrc(inNode));
+  nodeUrl: function(node) {
+    return path.resolveUrl(path.getDocumentUrl(document), path.hrefOrSrc(node));
   },
-  hrefOrSrc: function(inNode) {
-    return inNode.getAttribute("href") || inNode.getAttribute("src");
+  hrefOrSrc: function(node) {
+    return node.getAttribute("href") || node.getAttribute("src");
   },
-  documentUrlFromNode: function(inNode) {
-    return path.getDocumentUrl(inNode.ownerDocument || inNode);
+  documentUrlFromNode: function(node) {
+    return path.getDocumentUrl(node.ownerDocument || node);
   },
-  getDocumentUrl: function(inDocument) {
-    var url = inDocument &&
+  getDocumentUrl: function(doc) {
+    var url = doc &&
         // TODO(sjmiles): ShadowDOMPolyfill intrusion
-        (inDocument._URL || (inDocument.impl && inDocument.impl._URL)
-            || inDocument.baseURI || inDocument.URL)
+        (doc._URL || (doc.impl && doc.impl._URL)
+            || doc.baseURI || doc.URL)
                 || '';
     // take only the left side if there is a #
     return url.split('#')[0];
@@ -293,17 +293,17 @@ var path = {
     }
     return url;
   },
-  isAbsUrl: function(inUrl) {
-    return /(^data:)|(^http[s]?:)|(^\/)/.test(inUrl);
+  isAbsUrl: function(url) {
+    return /(^data:)|(^http[s]?:)|(^\/)/.test(url);
   },
-  urlToPath: function(inBaseUrl) {
-    var parts = inBaseUrl.split("/");
+  urlToPath: function(baseUrl) {
+    var parts = baseUrl.split("/");
     parts.pop();
     parts.push('');
     return parts.join("/");
   },
-  compressUrl: function(inUrl) {
-    var url = inUrl, search = '';
+  compressUrl: function(url) {
+    var search = '';
     var searchPos = url.indexOf('?');
     // query string is not part of the path
     if (searchPos > -1) {
@@ -321,13 +321,13 @@ var path = {
     return parts.join('/') + search;
   },
   // make a relative path from source to target
-  makeRelPath: function(inSource, inTarget) {
+  makeRelPath: function(source, target) {
     var s, t;
-    s = this.compressUrl(inSource).split("/");
-    t = this.compressUrl(inTarget).split("/");
+    s = this.compressUrl(source).split("/");
+    t = this.compressUrl(target).split("/");
     // bail if target is not relative to source
     if (!s.length || s[0] !== t[0]) {
-      return inTarget;
+      return target;
     }
     while (s.length && s[0] === t[0]){
       s.shift();
@@ -353,41 +353,41 @@ var path = {
       });
     }
   },
-  resolvePathsInStylesheet: function(inSheet) {
-    var docUrl = path.nodeUrl(inSheet);
-    inSheet.__resource = path.resolveCssText(inSheet.__resource, docUrl);
+  resolvePathsInStylesheet: function(sheet) {
+    var docUrl = path.nodeUrl(sheet);
+    sheet.__resource = path.resolveCssText(sheet.__resource, docUrl);
   },
-  resolveStyleElts: function(inRoot, inUrl) {
-    var styles = inRoot.querySelectorAll('style');
+  resolveStyleElts: function(root, url) {
+    var styles = root.querySelectorAll('style');
     if (styles) {
       forEach(styles, function(style) {
-        style.textContent = path.resolveCssText(style.textContent, inUrl);
+        style.textContent = path.resolveCssText(style.textContent, url);
       });
     }
   },
-  resolveCssText: function(inCssText, inBaseUrl) {
-    return inCssText.replace(/url\([^)]*\)/g, function(inMatch) {
+  resolveCssText: function(cssText, baseUrl) {
+    return cssText.replace(/url\([^)]*\)/g, function(match) {
       // find the url path, ignore quotes in url string
-      var urlPath = inMatch.replace(/["']/g, "").slice(4, -1);
-      urlPath = path.resolveUrl(inBaseUrl, urlPath, true);
+      var urlPath = match.replace(/["']/g, "").slice(4, -1);
+      urlPath = path.resolveUrl(baseUrl, urlPath, true);
       return "url(" + urlPath + ")";
     });
   },
-  resolveAttributes: function(inRoot, inUrl) {
+  resolveAttributes: function(root, url) {
     // search for attributes that host urls
-    var nodes = inRoot && inRoot.querySelectorAll(URL_ATTRS_SELECTOR);
+    var nodes = root && root.querySelectorAll(URL_ATTRS_SELECTOR);
     if (nodes) {
       forEach(nodes, function(n) {
-        this.resolveNodeAttributes(n, inUrl);
+        this.resolveNodeAttributes(n, url);
       }, this);
     }
   },
-  resolveNodeAttributes: function(inNode, inUrl) {
+  resolveNodeAttributes: function(node, url) {
     URL_ATTRS.forEach(function(v) {
-      var attr = inNode.attributes[v];
+      var attr = node.attributes[v];
       if (attr && attr.value &&
          (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
-        var urlPath = path.resolveUrl(inUrl, attr.value, true);
+        var urlPath = path.resolveUrl(url, attr.value, true);
         attr.value = urlPath;
       }
     });
@@ -396,10 +396,10 @@ var path = {
 
 xhr = xhr || {
   async: true,
-  ok: function(inRequest) {
-    return (inRequest.status >= 200 && inRequest.status < 300)
-        || (inRequest.status === 304)
-        || (inRequest.status === 0);
+  ok: function(request) {
+    return (request.status >= 200 && request.status < 300)
+        || (request.status === 304)
+        || (request.status === 0);
   },
   load: function(url, next, nextContext) {
     var request = new XMLHttpRequest();
