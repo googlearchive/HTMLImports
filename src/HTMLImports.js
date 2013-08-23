@@ -266,7 +266,7 @@ var URL_TEMPLATE_SEARCH = '{{.*}}';
 
 var path = {
   nodeUrl: function(node) {
-    return path.resolveUrl(path.getDocumentUrl(document), path.hrefOrSrc(node));
+    return path.resolveUrl(path.documentURL, path.hrefOrSrc(node));
   },
   hrefOrSrc: function(node) {
     return node.getAttribute("href") || node.getAttribute("src");
@@ -283,15 +283,17 @@ var path = {
     // take only the left side if there is a #
     return url.split('#')[0];
   },
-  resolveUrl: function(baseUrl, url, relativeToDocument) {
+  resolveUrl: function(baseUrl, url) {
     if (this.isAbsUrl(url)) {
       return url;
     }
-    url = this.compressUrl(this.urlToPath(baseUrl) + url);
-    if (relativeToDocument) {
-      url = path.makeRelPath(path.getDocumentUrl(document), url);
+    return this.compressUrl(this.urlToPath(baseUrl) + url);
+  },
+  resolveRelativeUrl: function(baseUrl, url) {
+    if (this.isAbsUrl(url)) {
+      return url;
     }
-    return url;
+    return path.makeRelPath(path.documentURL, this.resolveUrl(baseUrl, url));
   },
   isAbsUrl: function(url) {
     return /(^data:)|(^http[s]?:)|(^\/)/.test(url);
@@ -369,7 +371,7 @@ var path = {
     return cssText.replace(/url\([^)]*\)/g, function(match) {
       // find the url path, ignore quotes in url string
       var urlPath = match.replace(/["']/g, "").slice(4, -1);
-      urlPath = path.resolveUrl(baseUrl, urlPath, true);
+      urlPath = path.resolveRelativeUrl(baseUrl, urlPath);
       return "url(" + urlPath + ")";
     });
   },
@@ -387,12 +389,14 @@ var path = {
       var attr = node.attributes[v];
       if (attr && attr.value &&
          (attr.value.search(URL_TEMPLATE_SEARCH) < 0)) {
-        var urlPath = path.resolveUrl(url, attr.value, true);
+        var urlPath = path.resolveRelativeUrl(url, attr.value);
         attr.value = urlPath;
       }
     });
   }
 };
+
+path.documentURL = path.getDocumentUrl(document);
 
 xhr = xhr || {
   async: true,
