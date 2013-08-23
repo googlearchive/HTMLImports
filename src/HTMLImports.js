@@ -336,16 +336,16 @@ var path = {
   },
   // make a relative path from source to target
   makeRelPath: function(source, target) {
-    var s = source.split("/");
-    var t = target.split("/");
+    var s = source.split('/');
+    var t = target.split('/');
     while (s.length && s[0] === t[0]){
       s.shift();
       t.shift();
     }
     for(var i = 0, l = s.length-1; i < l; i++) {
-      t.unshift("..");
+      t.unshift('..');
     }
-    var r = t.join("/");
+    var r = t.join('/');
     return r;
   },
   resolvePathsInHTML: function(root, url) {
