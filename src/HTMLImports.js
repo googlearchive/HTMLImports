@@ -164,7 +164,8 @@ function makeDocument(resource, url) {
   var base = doc.createElement('base');
   base.setAttribute('href', document.baseURI || document.URL);
   doc.head.appendChild(base);
-  // TODO(sorvell): MDV Polyfill intrusion: boostrap template polyfill
+  // TODO(sorvell): ideally this code is not aware of Template polyfill,
+  // but for now the polyfill needs help to bootstrap these templates
   if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {
     HTMLTemplateElement.bootstrap(doc);
   }
@@ -223,7 +224,7 @@ Loader.prototype = {
       this.receive(url, elt, err, resource);
     }.bind(this);
     xhr.load(url, receiveXhr);
-    // TODO(sorvell): blocked on 
+    // TODO(sorvell): blocked on
     // https://code.google.com/p/chromium/issues/detail?id=257221
     // xhr'ing for a document makes scripts in imports runnable; otherwise
     // they are not; however, it requires that we have doctype=html in
