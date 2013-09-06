@@ -423,7 +423,7 @@ xhr = xhr || {
     request.addEventListener('readystatechange', function(e) {
       if (request.readyState === 4) {
         next.call(nextContext, !xhr.ok(request) && request,
-          request.response, url);
+          request.response || request.responseText, url);
       }
     });
     request.send();
