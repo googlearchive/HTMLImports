@@ -26,9 +26,11 @@ function bootstrap() {
       new CustomEvent('HTMLImportsLoaded', {bubbles: true})
     );
   });
-};
+}
 
-if (document.readyState === 'complete') {
+// Allow for asynchronous loading when minified
+// readyState 'interactive' is expected when loaded with 'async' or 'defer' attributes
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
   bootstrap();
 } else {
   window.addEventListener('DOMContentLoaded', bootstrap);
