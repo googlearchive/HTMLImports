@@ -20,6 +20,7 @@ function bootstrap() {
   // preload document resource trees
   HTMLImports.importer.load(document, function() {
     HTMLImports.parser.parse(document);
+    HTMLImports.ready = true;
     HTMLImports.readyTime = new Date().getTime();
     // send HTMLImportsLoaded when finished
     document.dispatchEvent(
