@@ -30,7 +30,10 @@ function bootstrap() {
 
 // Allow for asynchronous loading when minified
 // readyState 'interactive' is expected when loaded with 'async' or 'defer' attributes
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
+// note: use interactive state only when not on IE since it can become 
+// interactive early (see https://github.com/mobify/mobifyjs/issues/136)
+if (document.readyState === 'complete' ||
+    (document.readyState === 'interactive' && !window.attachEvent)) {
   bootstrap();
 } else {
   window.addEventListener('DOMContentLoaded', bootstrap);
