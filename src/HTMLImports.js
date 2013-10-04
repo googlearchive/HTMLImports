@@ -51,12 +51,12 @@ var importer = {
   loader: function(next) {
     // construct a loader instance
     loader = new Loader(importer.loaded, next);
-    // alias the loader cache (for debugging)
+    // alias the importer cache (for debugging)
     loader.cache = importer.cache;
     return loader;
   },
   load: function(doc, next) {
-    // construct a loader instance
+    // get a loader instance from the factory
     loader = importer.loader(next);
     // add nodes from document into loader queue
     importer.preload(doc);
