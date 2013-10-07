@@ -5,8 +5,13 @@
  */
 
 htmlSuite('HTMLImports', function() {
-  htmlTest('html/HTMLImports.html');
-  htmlTest('html/parser.html');
-  htmlTest('html/style-links.html');
-  htmlTest('html/path.html');
+  if (HTMLImports.useNative) {
+    htmlTest('html/parser.html');
+    htmlTest('html/style-links.html');
+  } else {
+    htmlTest('html/HTMLImports.html');
+    htmlTest('html/parser.html');
+    htmlTest('html/style-links.html');
+    htmlTest('html/path.html');  
+  }
 });

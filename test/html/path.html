@@ -41,7 +41,7 @@
   chai.assert.equal(path.compressUrl(url), url, 'compressUrl handles url\'s starting with / as abs');
   document.addEventListener('HTMLImportsLoaded', function() {
     var i = document.querySelector('[rel=import]');
-    var importDoc = i.import.content;
+    var importDoc = i.import;
     var parts = window.location.href.split('/');
     parts.pop();
     parts.pop();
