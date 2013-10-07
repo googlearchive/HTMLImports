@@ -10,6 +10,9 @@ if (!scope) {
   scope = window.HTMLImports = {flags:{}};
 }
 
+var hasNative = ('import' in document.createElement('link'));
+var useNative = !scope.flags.imports && hasNative;
+
 // imports
 
 var xhr = scope.xhr;
@@ -43,7 +46,6 @@ var importer = {
   cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
-    'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
     'script[src]:not([type])',
     'script[src][type="text/javascript"]'
@@ -62,6 +64,11 @@ var importer = {
     importer.preload(doc);
   },
   preload: function(doc) {
+    var nodes = this.marshalNodes(doc);
+    // add these nodes to loader's queue
+    loader.addNodes(nodes);
+  },
+  marshalNodes: function(doc) {
     // all preloadable nodes in inDocument
     var nodes = doc.querySelectorAll(importer.preloadSelectors);
     // from the main document, only load imports
@@ -69,8 +76,7 @@ var importer = {
     nodes = this.filterMainDocumentNodes(doc, nodes);
     // extra link nodes from templates, filter templates out of the nodes list
     nodes = this.extractTemplateNodes(nodes);
-    // add these nodes to loader's queue
-    loader.addNodes(nodes);
+    return nodes;
   },
   filterMainDocumentNodes: function(doc, nodes) {
     if (doc === document) {
@@ -115,11 +121,9 @@ var importer = {
         importer.preload(document);
       }
       // store import record
-      elt.import = {
-        href: url,
-        ownerNode: elt,
-        content: document
-      };
+      elt.import = document;
+      elt.import.href = url;
+      elt.import.ownerNode = elt;
       // store document resource
       elt.content = resource = document;
     }
@@ -443,6 +447,53 @@ xhr = xhr || {
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
+if (useNative) {
+  // TODO(sorvell): this exists as a load extension point.
+  importer.preloadSelectors = [
+    'template'
+  ].join(',');
+
+  function forEachImport(imp, cb) {
+    if (cb) {
+      cb(imp);
+    }
+    var n$ = imp.querySelectorAll('link[rel=' + IMPORT_LINK_TYPE + ']');
+    for (var i=0, l=n$.length, n; (i<l) && (n=n$[i]); i++) {
+      if (n.import) {
+        forEachImport(n.import, cb);
+      } else {
+        console.warn('import not loaded', n);
+      }
+    }
+  };
+
+  
+  var marshalNodes = importer.marshalNodes;
+  function preloadImport(imp) {
+    nodes = marshalNodes.call(this, imp);
+    var url = path.documentUrlFromNode(imp);
+    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+      path.resolveNodeAttributes(n, url);  
+    }
+    return nodes; 
+  };
+  
+
+  // marshal all relevant nodes in import tree.
+  importer.marshalNodes = function(doc) {
+    var nodes = [], self = this;
+    forEachImport(doc, function(imp) {
+      // only preload 1x per import.
+      if (!imp._preloaded) {
+        imp._preloaded = true;
+        var n$ = preloadImport.call(self, imp);
+        nodes = nodes.concat(Array.prototype.slice.call(n$, 0));
+      }
+    });
+    return nodes;
+  };
+}
+
 // exports
 
 scope.path = path;
@@ -450,5 +501,8 @@ scope.xhr = xhr;
 scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
+
+scope.hasNative = hasNative;
+scope.useNative = useNative;
 
 })(window.HTMLImports);

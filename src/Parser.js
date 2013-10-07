@@ -37,8 +37,8 @@ var importParser = {
   },
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
-      if (linkElt.content) {
-        importParser.parse(linkElt.content);
+      if (linkElt.import) {
+        importParser.parse(linkElt.import);
       }
     } else {
       this.parseGeneric(linkElt);
@@ -98,6 +98,24 @@ function inMainDocument(elt) {
 
 function isElementElementChild(elt) {
   return elt.parentNode && elt.parentNode.localName === 'element';
+}
+
+if (scope.useNative) {
+  var path = scope.path;
+  importParser.selectors = [
+    'link[rel=' + IMPORT_LINK_TYPE + ']',
+    'link[rel=stylesheet]',
+    'style'
+  ];
+
+  var parseGeneric = importParser.parseGeneric;
+  importParser.parseGeneric = function(elt) {
+    if (elt.href) {
+      var url = path.documentUrlFromNode(elt);
+      path.resolveNodeAttributes(elt, url);
+    }
+    parseGeneric(elt);
+  };
 }
 
 // exports
