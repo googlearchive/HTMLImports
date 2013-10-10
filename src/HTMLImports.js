@@ -451,4 +451,17 @@ scope.importer = importer;
 scope.getDocumentUrl = path.getDocumentUrl;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 
+// expose currentDocument: this allows scripts to always know what the 
+// relevant document is.
+Object.defineProperty(window, 'currentDocument', {
+  get: function() {
+    var script = HTMLImports.currentScript || document.currentScript;
+    if (script) {
+      return script.ownerDocument;
+    }
+  },
+  writeable: true,
+  configurable: true
+})
+
 })(window.HTMLImports);

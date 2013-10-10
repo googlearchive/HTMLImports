@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Current Script Test</title>
+    <script src="../../../tools/test/htmltest.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script src="../../html-imports.js"></script>
+    <link rel="import" href="imports/current-document-import.html">
+  </head>
+  <body>
+    <script>
+      chai.assert.ok(currentDocument === document, 'currentDocument ok for scripts in main document')
+      addEventListener('HTMLImportsLoaded', function() {
+        chai.assert.ok(document.querySelector('#node-from-import', 'found node in import'));
+        done();        
+      });
+    </script>
+  </body>
+</html>
