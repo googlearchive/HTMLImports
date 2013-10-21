@@ -8,7 +8,7 @@ module.exports = function(karma) {
     files: [
       'tools/test/mocha-htmltest.js',
       'HTMLImports/conf/mocha.conf.js',
-      'HTMLImports/node_modules/chai/chai.js',
+      'HTMLImports/../tools/test/chai/chai.js',
       'HTMLImports/test/js/*.js',
       'HTMLImports/html-imports.js',
       {pattern: 'tools/**/*.js', included: false},
