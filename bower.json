@@ -1,0 +1,22 @@
+{
+  "name": "HTMLImports",
+  "version": "0.0.20131107",
+  "homepage": "https://github.com/Polymer/HTMLImports",
+  "authors": [
+    "The Polymer Authors"
+  ],
+  "description": "Polyfill implementing the HTMLImports specification",
+  "main": "html-imports.js",
+  "keywords": [
+    "HTMLImports"
+  ],
+  "license": "BSD",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
