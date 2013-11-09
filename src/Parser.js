@@ -23,16 +23,27 @@ var importParser = {
     script: 'parseScript',
     style: 'parseGeneric'
   },
-  parse: function(inDocument) {
-    if (!inDocument.__importParsed) {
+  parse: function(document) {
+    if (!document.__importParsed) {
       // only parse once
-      inDocument.__importParsed = true;
+      document.__importParsed = true;
       // all parsable elements in inDocument (depth-first pre-order traversal)
-      var elts = inDocument.querySelectorAll(importParser.selectors);
+      var elts = document.querySelectorAll(importParser.selectors);
+      // memoize the number of scripts
+      var scriptCount = document.scripts.length;
       // for each parsable node type, call the mapped parsing method
-      forEach(elts, function(e) {
+      for (var i=0, e; i<elts.length && (e=elts[i]); i++) {
         importParser[importParser.map[e.localName]](e);
-      });
+        // if a script was injected, we need to requery our nodes
+        // TODO(sjmiles): injecting nodes above the current script will
+        // result in errors
+        if (scriptCount !== document.scripts.length) {
+          // memoize the new count
+          scriptCount = document.scripts.length;
+          // ensure we have any new nodes in our list
+          elts = document.querySelectorAll(importParser.selectors);
+        }
+      }
     }
   },
   parseLink: function(linkElt) {
