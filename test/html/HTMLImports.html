@@ -26,7 +26,7 @@
           Array.prototype.forEach.call(links, function(link) {
             var href = link.getAttribute('href');
             if (href.indexOf('404') <= 0) {
-              chai.assert.isDefined(link.import.content, 'import should have content');
+              chai.assert.isDefined(link.import, 'import should have an import property');
             }
           });
         })
