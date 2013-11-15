@@ -446,9 +446,6 @@ Object.defineProperty(document, '_currentScript', {
   get: function() {
     return HTMLImports.currentScript || document.currentScript;
   },
-  set: function(script) {
-    HTMLImports.currentScript = script;
-  },
   writeable: true,
   configurable: true
 });
