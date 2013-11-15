@@ -115,11 +115,9 @@ var importer = {
         importer.preload(document);
       }
       // store import record
-      elt.import = {
-        href: url,
-        ownerNode: elt,
-        content: document
-      };
+      elt.import = document;
+      elt.import.href = url;
+      elt.import.ownerNode = elt;
       // store document resource
       elt.content = resource = document;
     }

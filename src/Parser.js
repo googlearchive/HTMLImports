@@ -48,8 +48,10 @@ var importParser = {
   },
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
-      if (linkElt.content) {
-        importParser.parse(linkElt.content);
+      if (linkElt.import) {
+        importParser.parse(linkElt.import);
+        // fire load event
+        linkElt.dispatchEvent(new CustomEvent('load'));
       }
     } else {
       this.parseGeneric(linkElt);
