@@ -441,6 +441,19 @@ xhr = xhr || {
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
+// expose _currentScript
+Object.defineProperty(document, '_currentScript', {
+  get: function() {
+    return HTMLImports.currentScript || document.currentScript;
+  },
+  set: function(script) {
+    HTMLImports.currentScript = script;
+  },
+  writeable: true,
+  configurable: true
+});
+
+
 // exports
 
 scope.path = path;

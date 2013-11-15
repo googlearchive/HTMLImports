@@ -83,7 +83,9 @@ var importParser = {
         // source map hint
         code += "\n//# sourceURL=" + moniker + "\n";
         // evaluate the code
+        scope.currentScript = scriptElt;
         eval.call(window, code);
+        scope.currentScript = null;
       }
     }
   }
