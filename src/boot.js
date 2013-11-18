@@ -27,6 +27,34 @@ function bootstrap() {
       new CustomEvent('HTMLImportsLoaded', {bubbles: true})
     );
   });
+
+  if ('MutationObserver' in window) {
+    var observer = new MutationObserver(function (mutations) {
+      var linkTags = [];
+
+      mutations.forEach(function (mutation) {
+        Array.prototype.forEach.call(mutation.addedNodes, function (addedNode) {
+          if (addedNode.localName === 'link' && addedNode.rel === HTMLImports.IMPORT_LINK_TYPE) {
+            linkTags.push(addedNode);
+          }
+        });
+      });
+
+      if (linkTags.length > 0) {
+        HTMLImports.importer.load(document, function () {
+          linkTags.forEach(function (linkTag) {
+            HTMLImports.parser.parseLink(linkTag);
+            document.dispatchEvent(
+              new CustomEvent('LinkTagImported', {bubbles: true, detail: linkTag})
+            );
+          });
+        });
+      }
+
+    });
+
+    observer.observe(document.head, { childList: true });
+  }
 }
 
 // Allow for asynchronous loading when minified
