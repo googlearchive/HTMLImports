@@ -23,6 +23,10 @@ var importParser = {
     script: 'parseScript',
     style: 'parseGeneric'
   },
+  // TODO(sorvell): because dynamic imports are not supported, users are 
+  // writing code like in https://github.com/Polymer/HTMLImports/issues/40
+  // as a workaround. The code here checking for the existence of
+  // document.scripts is here only to support the workaround.
   parse: function(document) {
     if (!document.__importParsed) {
       // only parse once
@@ -30,14 +34,14 @@ var importParser = {
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = document.querySelectorAll(importParser.selectors);
       // memoize the number of scripts
-      var scriptCount = document.scripts.length;
+      var scriptCount = document.scripts ? document.scripts.length : 0;
       // for each parsable node type, call the mapped parsing method
       for (var i=0, e; i<elts.length && (e=elts[i]); i++) {
         importParser[importParser.map[e.localName]](e);
         // if a script was injected, we need to requery our nodes
         // TODO(sjmiles): injecting nodes above the current script will
         // result in errors
-        if (scriptCount !== document.scripts.length) {
+        if (document.scripts && scriptCount !== document.scripts.length) {
           // memoize the new count
           scriptCount = document.scripts.length;
           // ensure we have any new nodes in our list

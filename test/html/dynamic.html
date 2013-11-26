@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>HTML Imports Dynamic</title>
+    <script src="../../../tools/test/htmltest.js"></script>
+    <script src="../../../tools/test/chai/chai.js"></script>
+    <script src="../../html-imports.js"></script>
+  </head>
+  <body>
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // some time later
+        setTimeout(function() {
+          var div = document.createElement('div');
+          div.innerHTML = '<link rel="import" href="imports/load-1.html">' +
+              '<link rel="import" href="imports/load-2.html">';
+          document.body.appendChild(div);
+          // TODO(sorvell): workaround for missing support for dynamic imports.
+          HTMLImports.importer.load(div, function() {
+            HTMLImports.parser.parse(div);
+            chai.assert.ok(load1, 'dynamic import loaded');
+            chai.assert.ok(load2, 'dynamic import loaded');
+            done();
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
