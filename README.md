@@ -37,7 +37,11 @@ Example:
     });
     </script>
 
-The polyfill loads linked stylesheets, external scripts, and nested linked imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/Polymer/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
+The polyfill loads linked stylesheets, external scripts, and nested HTML imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/Polymer/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
+
+#### Other notes
+
+- In a native HTML Imports, `document.currentScript.ownerDocument` references the import document itself. In the polyfill use `document._currentScript.ownerDocument` (note the underscore).
 
 ## Tools & Testing
 
