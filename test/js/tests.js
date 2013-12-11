@@ -11,4 +11,5 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/path.html');
   htmlTest('html/load.html');
   htmlTest('html/currentScript.html');
+  htmlTest('html/dedupe.html');
 });

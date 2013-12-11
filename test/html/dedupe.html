@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <title>HTML dedupe Test</title>
+    <script src="../../../tools/test/htmltest.js"></script>
+    <script src="../../../tools/test/chai/chai.js"></script>
+    <script src="../../html-imports.js"></script>
+    <link rel="import" href="imports/dedupe.html">
+    <script>
+      var a = document.createElement('a');
+      a.href = document.baseURI;
+      var path = a.pathname.split('/');
+      path.pop();
+      //
+      var link = document.createElement('link');
+      link.href = path.join('/') + '/imports/dedupe.html';
+      link.rel = 'import';
+      document.head.appendChild(link);
+    </script>
+  </head>
+  <body>
+    <script>
+      addEventListener('HTMLImportsLoaded', function() {
+        chai.assert.equal(dedupe, 1, 'import loaded');
+        done();
+      });
+    </script>
+  </body>
+</html>

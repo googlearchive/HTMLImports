@@ -196,6 +196,9 @@ Loader.prototype = {
   },
   require: function(elt) {
     var url = path.nodeUrl(elt);
+    // ensure we have a standard url that can be used
+    // reliably for deduping.
+    url = path.makeAbsUrl(url);
     // TODO(sjmiles): ad-hoc
     elt.__nodeUrl = url;
     // deduplication
@@ -353,6 +356,10 @@ var path = {
     }
     var r = t.join('/');
     return r;
+  },
+  makeAbsUrl: function(url) {
+    path.urlElt.href = url;
+    return path.urlElt.href;
   },
   resolvePathsInHTML: function(root, url) {
     url = url || path.documentUrlFromNode(root)
