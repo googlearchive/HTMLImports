@@ -43,7 +43,6 @@ var importer = {
   cache: {},
   preloadSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
-    'element link[rel=' + STYLE_LINK_TYPE + ']',
     'template',
     'script[src]:not([type])',
     'script[src][type="text/javascript"]'
@@ -388,11 +387,22 @@ var path = {
     }
   },
   resolveCssText: function(cssText, baseUrl) {
-    return cssText.replace(/url\([^)]*\)/g, function(match) {
-      // find the url path, ignore quotes in url string
-      var urlPath = match.replace(/["']/g, "").slice(4, -1);
+    var cssText = path.resolveUrlInCssText(cssText, baseUrl);
+    return path.resolveImportInCssText(cssText, baseUrl);
+  },
+  resolveUrlInCssText: function(cssText, baseUrl) {
+    return cssText.replace(/(url\()([^)]*)(\))/g, function(m, pre, url, post) {
+      var urlPath = url.replace(/["']/g, '');
       urlPath = path.resolveRelativeUrl(baseUrl, urlPath);
-      return "url(" + urlPath + ")";
+      return pre + urlPath + post;
+    });
+  },
+  resolveImportInCssText: function(cssText, baseUrl) {
+    return cssText.replace(/(@import[\s]*)([^;]*)(;)/g,
+        function(m, pre, url, post) {
+      var urlPath = url.replace(/["']/g, '');
+      urlPath = path.resolveRelativeUrl(baseUrl, urlPath);
+      return pre + urlPath + post;
     });
   },
   resolveAttributes: function(root, url) {

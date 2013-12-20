@@ -104,19 +104,14 @@ function isDocumentLink(elt) {
 
 function needsMainDocumentContext(node) {
   // nodes can be moved to the main document:
-  // if they are in a tree but not in the main document and not children of <element>
-  return node.parentNode && !inMainDocument(node) 
-      && !isElementElementChild(node);
+  // if they are in a tree but not in the main document
+  return node.parentNode && !inMainDocument(node);
 }
 
 function inMainDocument(elt) {
   return elt.ownerDocument === document ||
     // TODO(sjmiles): ShadowDOMPolyfill intrusion
     elt.ownerDocument.impl === document;
-}
-
-function isElementElementChild(elt) {
-  return elt.parentNode && elt.parentNode.localName === 'element';
 }
 
 // exports
