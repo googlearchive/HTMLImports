@@ -7,7 +7,7 @@
 (function(scope) {
 
 var IMPORT_LINK_TYPE = 'import';
-
+var isIe = /Trident/.test(navigator.userAgent)
 // highlander object for parsing a document tree
 
 var importParser = {
@@ -21,16 +21,18 @@ var importParser = {
   map: {
     link: 'parseLink',
     script: 'parseScript',
-    style: 'parseGeneric'
+    style: 'parseStyle'
   },
   // TODO(sorvell): because dynamic imports are not supported, users are 
   // writing code like in https://github.com/Polymer/HTMLImports/issues/40
   // as a workaround. The code here checking for the existence of
   // document.scripts is here only to support the workaround.
-  parse: function(document) {
+  parse: function(document, done) {
     if (!document.__importParsed) {
       // only parse once
       document.__importParsed = true;
+      console.group('parsing', scope.path.getDocumentUrl(document));
+      var tracker = new LoadTracker(document, done);
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = document.querySelectorAll(importParser.selectors);
       // memoize the number of scripts
@@ -48,21 +50,41 @@ var importParser = {
           elts = document.querySelectorAll(importParser.selectors);
         }
       }
+      console.groupEnd('parsing', scope.path.getDocumentUrl(document));
+      tracker.open();
+    } else if (done) {
+      done();
     }
   },
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
+      this.trackElement(linkElt);
       if (linkElt.import) {
-        importParser.parse(linkElt.import);
-        // fire load event
-        linkElt.dispatchEvent(new CustomEvent('load'));
+        importParser.parse(linkElt.import, function() {
+          // fire load event
+          linkElt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
+        });
+      } else {
+        linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
       }
     } else {
       this.parseGeneric(linkElt);
     }
   },
+  trackElement: function(elt) {
+    // IE doesn't fire load on style elements
+    if (!isIe || elt.localName !== 'style') {
+      elt.ownerDocument.__loadTracker.require(elt);
+    }
+  },
+  parseStyle: function(elt) {
+    // TODO(sorvell): style element load event can just not fire so clone styles
+    elt = needsMainDocumentContext(elt) ? cloneStyle(elt) : elt;
+    this.parseGeneric(elt);
+  },
   parseGeneric: function(elt) {
     if (needsMainDocumentContext(elt)) {
+      this.trackElement(elt);
       document.head.appendChild(elt);
     }
   },
@@ -94,6 +116,55 @@ var importParser = {
     }
   }
 };
+
+function cloneStyle(style) {
+  var clone = style.ownerDocument.createElement('style');
+  clone.textContent = style.textContent;
+  return clone;
+}
+
+function LoadTracker(doc, callback) {
+  this.doc = doc;
+  this.doc.__loadTracker = this;
+  this.callback = callback;
+}
+
+LoadTracker.prototype = {
+  pending: 0,
+  isOpen: false,
+  open: function() {
+    this.isOpen = true;
+    this.checkDone();
+  },
+  add: function() {
+    this.pending++;
+  },
+  require: function(elt) {
+    this.add();
+    console.log('require', elt, this.pending);
+    var names = ['load', 'error'], self = this;
+    for (var i=0, l=names.length, n; (i<l) && (n=names[i]); i++) {
+      elt.addEventListener(n, function(e) {
+        self.receive(e);
+      });
+    }
+  },
+  receive: function(e) {
+    this.pending--;
+    console.log('receive', e.target, this.pending);
+    this.checkDone();
+  },
+  checkDone: function() {
+    if (!this.isOpen) {
+      return;
+    }
+    if (this.pending <= 0 && this.callback) {
+      console.log('done!', this.doc, scope.path.getDocumentUrl(this.doc));
+      this.isOpen = false;
+      this.callback();
+    }
+  }
+}
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 

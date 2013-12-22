@@ -9,23 +9,31 @@
 
 // IE shim for CustomEvent
 if (typeof window.CustomEvent !== 'function') {
-  window.CustomEvent = function(inType) {
+  window.CustomEvent = function(inType, dictionary) {
      var e = document.createEvent('HTMLEvents');
-     e.initEvent(inType, true, true);
+     e.initEvent(inType,
+        dictionary.bubbles === false ? false : true,
+        dictionary.cancelable === false ? false : true,
+        dictionary.detail);
      return e;
   };
 }
 
 function bootstrap() {
+  // TODO(sorvell): SD polyfill intrusion
+  var doc = window.ShadowDOMPolyfill ? 
+      window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
   // preload document resource trees
-  HTMLImports.importer.load(document, function() {
-    HTMLImports.parser.parse(document);
-    HTMLImports.ready = true;
-    HTMLImports.readyTime = new Date().getTime();
-    // send HTMLImportsLoaded when finished
-    document.dispatchEvent(
-      new CustomEvent('HTMLImportsLoaded', {bubbles: true})
-    );
+  HTMLImports.importer.load(doc, function() {
+    HTMLImports.parser.parse(doc, function() {;
+      HTMLImports.ready = true;
+      HTMLImports.readyTime = new Date().getTime();
+      // send HTMLImportsLoaded when finished
+      console.warn('firing HTMLImportsLoaded');
+      doc.dispatchEvent(
+        new CustomEvent('HTMLImportsLoaded', {bubbles: true})
+      );
+    })
   });
 }
 
