@@ -271,6 +271,8 @@ Loader.prototype = {
 var URL_ATTRS = ['href', 'src', 'action'];
 var URL_ATTRS_SELECTOR = '[' + URL_ATTRS.join('],[') + ']';
 var URL_TEMPLATE_SEARCH = '{{.*}}';
+var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
+var CSS_IMPORT_REGEXP = /(@import[\s]*)([^;]*)(;)/g;
 
 var path = {
   nodeUrl: function(node) {
@@ -334,8 +336,10 @@ var path = {
     // test url against document to see if we can construct a relative path
     path.urlElt.href = url;
     // IE does not set host if same as document
-    if (!path.urlElt.host || 
-        (path.urlElt.host === window.location.host &&
+    if (!path.urlElt.host ||
+        (!window.location.port && path.urlElt.port === '80') || 
+        (path.urlElt.hostname === window.location.hostname &&
+        path.urlElt.port === window.location.port &&
         path.urlElt.protocol === window.location.protocol)) {
       return this.makeRelPath(path.documentURL, path.urlElt.href);
     } else {
@@ -387,22 +391,14 @@ var path = {
     }
   },
   resolveCssText: function(cssText, baseUrl) {
-    var cssText = path.resolveUrlInCssText(cssText, baseUrl);
-    return path.resolveImportInCssText(cssText, baseUrl);
+    var cssText = path.replaceUrlsInCssText(cssText, baseUrl, CSS_URL_REGEXP);
+    return path.replaceUrlsInCssText(cssText, baseUrl, CSS_IMPORT_REGEXP);
   },
-  resolveUrlInCssText: function(cssText, baseUrl) {
-    return cssText.replace(/(url\()([^)]*)(\))/g, function(m, pre, url, post) {
+  replaceUrlsInCssText: function(cssText, baseUrl, regexp) {
+    return cssText.replace(regexp, function(m, pre, url, post) {
       var urlPath = url.replace(/["']/g, '');
       urlPath = path.resolveRelativeUrl(baseUrl, urlPath);
-      return pre + urlPath + post;
-    });
-  },
-  resolveImportInCssText: function(cssText, baseUrl) {
-    return cssText.replace(/(@import[\s]*)([^;]*)(;)/g,
-        function(m, pre, url, post) {
-      var urlPath = url.replace(/["']/g, '');
-      urlPath = path.resolveRelativeUrl(baseUrl, urlPath);
-      return pre + urlPath + post;
+      return pre + '\'' + urlPath + '\'' + post;
     });
   },
   resolveAttributes: function(root, url) {
