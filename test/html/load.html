@@ -3,14 +3,13 @@
   <head>
     <title>load event Test</title>
     <script>
+      window.loadEvents = 0;
       (function() {
-        var loadEvents = 0;
         function importLoaded(event) {
-          loadEvents++;
-          var s = event.target.import.querySelector('script');
-          chai.assert.ok(s, 'load event target can be used to find element in import');
-          if (loadEvents == 2) {
-            done();
+          window.loadEvents++;
+          if (event.target.import) {
+            var s = event.target.import.querySelector('script');
+            chai.assert.ok(s, 'load event target can be used to find element in import');
           }
         }
         window.importLoaded = importLoaded;
@@ -21,8 +20,20 @@
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/load-1.html" onload="importLoaded(event)">
     <link rel="import" href="imports/load-2.html" onload="importLoaded(event)">
+    <link rel="import" href="imports/404.html" onerror="importLoaded(event)">
   </head>
   <body>
-    
+    <div id="test1" class="red">Test</div>
+    <div id="test2" class="blue">Test</div>
+    <script>
+      document.addEventListener('HTMLImportsLoaded', function() {
+        chai.assert.equal(loadEvents, 3, 'expected # of load events');
+        var test1 = getComputedStyle(document.querySelector('#test1')).backgroundColor;
+        chai.assert.equal(test1, 'rgb(255, 0, 0)');
+        var test2 = getComputedStyle(document.querySelector('#test2')).backgroundColor;
+        chai.assert.equal(test2, 'rgb(0, 0, 255)');
+        done();
+      });
+    </script>
   </body>
 </html>

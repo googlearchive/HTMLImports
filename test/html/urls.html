@@ -13,8 +13,21 @@
   
   document.addEventListener('HTMLImportsLoaded', function() {
     var i = document.querySelector('[rel=import]');
-    var importDoc = i.import;
-    console.log(i.import);
+    var doc = i.import;
+    chai.assert.equal(doc.querySelector('img').getAttribute('src'),
+        '../foo.png', 'src path adjusted');
+    chai.assert.equal(doc.querySelector('x-script').getAttribute('src'),
+        'imports/foo/bar/baz/foo.js', 'src path adjusted');
+    chai.assert.equal(doc.querySelector('x-a').getAttribute('href'),
+        '/foo.html', 'href abs path not adjusted');
+    chai.assert.equal(doc.querySelector('x-form').getAttribute('action'),
+        'actions/action.html', 'action path adjusted');
+    var style = document.querySelector('style');
+    chai.assert.ok(style.sheet, 'style has sheet');
+    chai.assert.ok(style.textContent.match(/@import 'stuff\/sheet\.css';/));
+    chai.assert.ok(style.textContent.match(/@import 'imports\/sheet1.css';/));
+    chai.assert.ok(style.textContent.match(/url\('\.\.\/foo\.png'\)/));
+    chai.assert.ok(style.textContent.match(/url\('http\:\/\/www\.google\.com'\)/));
     done();  
   });
   </script>

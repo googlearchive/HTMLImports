@@ -9,6 +9,7 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/parser.html');
   htmlTest('html/style-links.html');
   htmlTest('html/path.html');
+  htmlTest('html/urls.html');
   htmlTest('html/load.html');
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
