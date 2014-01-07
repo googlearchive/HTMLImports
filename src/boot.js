@@ -29,7 +29,7 @@ function bootstrap() {
       HTMLImports.ready = true;
       HTMLImports.readyTime = new Date().getTime();
       // send HTMLImportsLoaded when finished
-      console.warn('firing HTMLImportsLoaded');
+      //console.warn('firing HTMLImportsLoaded');
       doc.dispatchEvent(
         new CustomEvent('HTMLImportsLoaded', {bubbles: true})
       );

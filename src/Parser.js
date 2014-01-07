@@ -31,7 +31,7 @@ var importParser = {
     if (!document.__importParsed) {
       // only parse once
       document.__importParsed = true;
-      console.group('parsing', scope.path.getDocumentUrl(document));
+      //console.group('parsing', scope.path.getDocumentUrl(document));
       var tracker = new LoadTracker(document, done);
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = document.querySelectorAll(importParser.selectors);
@@ -50,7 +50,7 @@ var importParser = {
           elts = document.querySelectorAll(importParser.selectors);
         }
       }
-      console.groupEnd('parsing', scope.path.getDocumentUrl(document));
+      //console.groupEnd('parsing', scope.path.getDocumentUrl(document));
       tracker.open();
     } else if (done) {
       done();
@@ -146,7 +146,7 @@ LoadTracker.prototype = {
   },
   require: function(elt) {
     this.add();
-    console.log('require', elt, this.pending);
+    //console.log('require', elt, this.pending);
     var names = ['load', 'error'], self = this;
     for (var i=0, l=names.length, n; (i<l) && (n=names[i]); i++) {
       elt.addEventListener(n, function(e) {
@@ -156,7 +156,7 @@ LoadTracker.prototype = {
   },
   receive: function(e) {
     this.pending--;
-    console.log('receive', e.target, this.pending);
+    //console.log('receive', e.target, this.pending);
     this.checkDone();
   },
   checkDone: function() {
@@ -164,7 +164,7 @@ LoadTracker.prototype = {
       return;
     }
     if (this.pending <= 0 && this.callback) {
-      console.log('done!', this.doc, scope.path.getDocumentUrl(this.doc));
+      //console.log('done!', this.doc, scope.path.getDocumentUrl(this.doc));
       this.isOpen = false;
       this.callback();
     }
