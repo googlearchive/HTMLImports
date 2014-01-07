@@ -48,6 +48,14 @@ var importer = {
     'script[src][type="text/javascript"]'
   ].join(','),
   loader: function(next) {
+    if (loader && loader.inflight) {
+      var currentComplete = loader.oncomplete;
+      loader.oncomplete = function() {
+        currentComplete();
+        next();
+      }
+      return loader;
+    }
     // construct a loader instance
     loader = new Loader(importer.loaded, next);
     // alias the importer cache (for debugging)
