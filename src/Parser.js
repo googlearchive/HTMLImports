@@ -83,7 +83,12 @@ var importParser = {
     this.parseGeneric(elt);
   },
   parseGeneric: function(elt) {
-    if (needsMainDocumentContext(elt)) {
+    // TODO(sorvell): because of a style element needs to be out of 
+    // tree to fire the load event, avoid the check for parentNode that
+    // needsMainDocumentContext does. Why was that necessary? if it is, 
+    // refactor this.
+    //if (needsMainDocumentContext(elt)) {
+    if (!inMainDocument(elt)) {
       this.trackElement(elt);
       document.head.appendChild(elt);
     }
