@@ -6,6 +6,8 @@
 
 (function(scope) {
 
+var path = scope.path;
+
 var IMPORT_LINK_TYPE = 'import';
 var isIe = /Trident/.test(navigator.userAgent)
 // highlander object for parsing a document tree
@@ -68,6 +70,8 @@ var importParser = {
         linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
       }
     } else {
+      // TODO(sorvell): what about resolvePathsInStylesheet???
+      path.resolveNodeAttributes(linkElt);
       this.parseGeneric(linkElt);
     }
   },
@@ -80,6 +84,7 @@ var importParser = {
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
     elt = needsMainDocumentContext(elt) ? cloneStyle(elt) : elt;
+    path.resolveStyleElt(elt);
     this.parseGeneric(elt);
   },
   parseGeneric: function(elt) {
@@ -189,6 +194,26 @@ function inMainDocument(elt) {
     // TODO(sjmiles): ShadowDOMPolyfill intrusion
     elt.ownerDocument.impl === document;
 }
+
+/*
+if (scope.useNative) {
+  var path = scope.path;
+  importParser.selectors = [
+    'link[rel=' + IMPORT_LINK_TYPE + ']',
+    'link[rel=stylesheet]',
+    'style'
+  ];
+
+  var parseGeneric = importParser.parseGeneric;
+  importParser.parseGeneric = function(elt) {
+    if (elt.href) {
+      var url = path.documentUrlFromNode(elt);
+      path.resolveNodeAttributes(elt, url);
+    }
+    parseGeneric(elt);
+  };
+}
+*/
 
 // exports
 
