@@ -6,14 +6,19 @@
     <script src="../../../tools/test/chai/chai.js"></script>
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/script-1.html">
-    <script>
-      addEventListener('HTMLImportsLoaded', function() {
-        chai.assert.equal(document._currentScript, document.currentScript, '_currentScript reflects currentScript');
-        done();
-      });
-    </script>
   </head>
   <body>
-    
+    <script>
+      function test() {
+        chai.assert.equal(document._currentScript, document.currentScript, '_currentScript reflects currentScript');
+        done();
+      }
+
+      if (HTMLImports.ready) {
+        test();
+      } else {
+        addEventListener('HTMLImportsLoaded', test);
+      }
+    </script>
   </body>
 </html>

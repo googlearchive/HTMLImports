@@ -14,13 +14,20 @@
   document.addEventListener('HTMLImportsLoaded', function() {
     var i = document.querySelector('[rel=import]');
     var doc = i.import;
-    chai.assert.equal(doc.querySelector('img').getAttribute('src'),
+    var template = doc.querySelector('template');
+    chai.assert.ok(template, 'template found');
+    HTMLImports.path.resolvePathsInHTML(template.content,
+        template.ownerDocument.baseURI);
+    document.body.appendChild(template.content.cloneNode(true));
+
+    var testRoot = template.content;
+    chai.assert.equal(testRoot.querySelector('img').getAttribute('src'),
         '../foo.png', 'src path adjusted');
-    chai.assert.equal(doc.querySelector('x-script').getAttribute('src'),
+    chai.assert.equal(testRoot.querySelector('x-script').getAttribute('src'),
         'imports/foo/bar/baz/foo.js', 'src path adjusted');
-    chai.assert.equal(doc.querySelector('x-a').getAttribute('href'),
+    chai.assert.equal(testRoot.querySelector('x-a').getAttribute('href'),
         '/foo.html', 'href abs path not adjusted');
-    chai.assert.equal(doc.querySelector('x-form').getAttribute('action'),
+    chai.assert.equal(testRoot.querySelector('x-form').getAttribute('action'),
         'actions/action.html', 'action path adjusted');
     var style = document.querySelector('style');
     chai.assert.ok(style.sheet, 'style has sheet');
