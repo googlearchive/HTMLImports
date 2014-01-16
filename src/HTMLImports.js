@@ -222,17 +222,21 @@ function whenImportsReady(callback, doc) {
   var loaded = 0, l = imports.length;
   function check() {
     loaded++;
-    if (loaded == l) {
-      callback && callback();
+    if (loaded == l && callback) {
+      callback();
     }
   }
   for (var i=0, imp; (i<l) && (imp=imports[i]); i++) {
-    if (imp.import) {
+    if (isImportLoaded(imp)) {
       check();
     } else {
       imp.addEventListener('load', check);
     }
   }
+}
+
+function isImportLoaded(link) {
+  return link.import && (useNative || link.import.__importParsed);
 }
 
 // exports
