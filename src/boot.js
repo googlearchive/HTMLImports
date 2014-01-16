@@ -35,7 +35,7 @@ function notifyReady() {
 }
 
 if (HTMLImports.useNative) {
-  notifyReady();
+  //notifyReady();
 } else {
   function bootstrap() {
     // preload document resource trees
@@ -56,6 +56,10 @@ if (HTMLImports.useNative) {
   } else {
     window.addEventListener('DOMContentLoaded', bootstrap);
   }
+
+  HTMLImports.whenImportsReady(function() {
+    notifyReady();
+  });
 }
 
 })();
