@@ -36,9 +36,8 @@ function addedNodes(nodes) {
   }
 }
 
-// TODO(sorvell): need x-platform matches
 function shouldLoadNode(node) {
-  return node.matches(importer.preloadSelectors);
+  return matches.call(node, importer.preloadSelectors);
 }
 
 var observer = new MutationObserver(handler);
@@ -54,8 +53,8 @@ function canParse(node) {
   return nextImportToParse(doc) === node;
 }
 
-function nextImportToParse(doc) {
-
+function nextImportToParse() {
+  //doc.querySelectorAll(importSelector)
 }
 
 

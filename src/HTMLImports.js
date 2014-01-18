@@ -246,5 +246,6 @@ scope.hasNative = hasNative;
 scope.useNative = useNative;
 scope.whenImportsReady = whenImportsReady;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
+scope.isImportLoaded = isImportLoaded;
 
 })(window.HTMLImports);
