@@ -26,24 +26,20 @@ var doc = window.ShadowDOMPolyfill ?
 function notifyReady() {
   HTMLImports.ready = true;
   HTMLImports.readyTime = new Date().getTime();
-  // send HTMLImportsLoaded when finished
-  //console.warn('firing HTMLImportsLoaded');
-  // TODO(sorvell): event is not useful if it fires too early.
+  //console.log('HTMLImportsLoaded');
   doc.dispatchEvent(
     new CustomEvent('HTMLImportsLoaded', {bubbles: true})
   );
 }
 
-if (HTMLImports.useNative) {
-  //notifyReady();
-} else {
+if (!HTMLImports.useNative) {
   function bootstrap() {
-    // preload document resource trees
-    HTMLImports.importer.load(doc, function() {
-      HTMLImports.parser.parse(doc, function() {;
-        notifyReady();
-      })
-    });
+    if (!HTMLImports.useNative) {
+      // preload document resource trees
+      HTMLImports.importer.load(doc, function() {
+        HTMLImports.parser.parse(doc);
+      });
+    }
   }
 
   // Allow for asynchronous loading when minified
@@ -54,12 +50,12 @@ if (HTMLImports.useNative) {
       (document.readyState === 'interactive' && !window.attachEvent)) {
     bootstrap();
   } else {
-    window.addEventListener('DOMContentLoaded', bootstrap);
+    document.addEventListener('DOMContentLoaded', bootstrap);
   }
-
-  HTMLImports.whenImportsReady(function() {
-    notifyReady();
-  });
 }
+
+HTMLImports.whenImportsReady(function() {
+  notifyReady();
+});
 
 })();

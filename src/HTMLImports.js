@@ -9,8 +9,9 @@
 var hasNative = ('import' in document.createElement('link'));
 var useNative = !scope.flags.imports && hasNative;
 
-if (!useNative) {
+var IMPORT_LINK_TYPE = 'import';
 
+if (!useNative) {
   // imports
   var path = scope.path;
   var Loader = scope.Loader;
@@ -35,7 +36,6 @@ if (!useNative) {
   // inline style sheets get path fixups when their containing import modifies paths
 
   var importLoader;
-  var IMPORT_LINK_TYPE = 'import';
   var STYLE_LINK_TYPE = 'stylesheet';
 
   var importer = {
@@ -125,10 +125,7 @@ if (!useNative) {
           // add nodes from this document to the loader queue
           importer.preload(document);
         }
-        // store import record
-        elt.import = document;
-        elt.import.href = url;
-        elt.import.ownerNode = elt;
+        // don't store import record until we're actually loaded
         // store document resource
         elt.content = resource = document;
       }
@@ -193,7 +190,6 @@ if (!useNative) {
 
   // exports
   scope.importer = importer;
-  scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 } else {
   // do nothing if using native imports
 }
@@ -210,8 +206,12 @@ Object.defineProperty(document, '_currentScript', {
   configurable: true
 });
 
+// TODO(sorvell): multiple calls will install multiple event listeners
+// which may not be desireable; calls should resolve in the correct order,
+// however.
 function whenImportsReady(callback, doc) {
   doc = doc || document;
+  // if document is loading, wait and try again
   if (doc.readyState === 'loading') {
     doc.addEventListener('DOMContentLoaded', function() {
       whenImportsReady(callback, doc);
@@ -220,28 +220,38 @@ function whenImportsReady(callback, doc) {
   }
   var imports = doc.querySelectorAll('link[rel=import');
   var loaded = 0, l = imports.length;
-  function check() {
-    loaded++;
-    if (loaded == l && callback) {
-      callback();
+  function checkDone(d) {  
+    if (loaded == l) {
+      // go async to ensure parser isn't stuck on a script tag
+      requestAnimationFrame(callback);
     }
   }
-  for (var i=0, imp; (i<l) && (imp=imports[i]); i++) {
-    if (isImportLoaded(imp)) {
-      check();
-    } else {
-      imp.addEventListener('load', check);
+  // called in context of import
+  function loadedImport() {
+    loaded++;
+    checkDone();
+  }
+  if (l) {
+    for (var i=0, imp; (i<l) && (imp=imports[i]); i++) {
+      if (isImportLoaded(imp)) {
+        loadedImport.call(imp);
+      } else {
+        imp.addEventListener('load', loadedImport);
+      }
     }
+  } else {
+    checkDone();
   }
 }
 
 function isImportLoaded(link) {
-  return link.import && (useNative || link.import.__importParsed);
+  return link.import && (link.import.readyState !== 'loading');
 }
 
 // exports
 scope.hasNative = hasNative;
 scope.useNative = useNative;
 scope.whenImportsReady = whenImportsReady;
+scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 
 })(window.HTMLImports);
