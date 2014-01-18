@@ -9,6 +9,11 @@ license that can be found in the LICENSE file.
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 
+var matches = HTMLElement.prototype.matches || 
+    HTMLElement.prototype.matchesSelector || 
+    HTMLElement.prototype.webkitMatchesSelector ||
+    HTMLElement.prototype.mozMatchesSelector;
+
 var importer = scope.importer;
 
 function handler(mutations) {
@@ -23,7 +28,10 @@ function addedNodes(nodes) {
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
     if (shouldLoadNode(n)) {
       // TODO(sorvell): need to add this api.
-      importer.addNode(node);
+      importer.addNode(n);
+      if (n.children && n.children.length) {
+        addedNodes(n.children);
+      }
     }
   }
 }
