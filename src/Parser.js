@@ -33,7 +33,7 @@ var importParser = {
     if (!document.__importParsed) {
       // only parse once
       document.__importParsed = true;
-      //console.group('parsing', scope.path.getDocumentUrl(document));
+      //console.group('parsing', document.baseURI);
       var tracker = new LoadTracker(document, done);
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = document.querySelectorAll(importParser.selectors);
@@ -52,7 +52,7 @@ var importParser = {
           elts = document.querySelectorAll(importParser.selectors);
         }
       }
-      //console.groupEnd('parsing', scope.path.getDocumentUrl(document));
+      //console.groupEnd('parsing', document.baseURI);
       tracker.open();
     } else if (done) {
       done();
@@ -72,8 +72,6 @@ var importParser = {
         linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
       }
     } else {
-      // TODO(sorvell): what about resolvePathsInStylesheet???
-      path.resolveNodeAttributes(linkElt);
       this.parseGeneric(linkElt);
     }
   },
@@ -86,7 +84,6 @@ var importParser = {
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
     elt = needsMainDocumentContext(elt) ? cloneStyle(elt) : elt;
-    path.resolveStyleElt(elt);
     this.parseGeneric(elt);
   },
   parseGeneric: function(elt) {
@@ -108,7 +105,7 @@ var importParser = {
         // calculate source map hint
         var moniker = scriptElt.__nodeUrl;
         if (!moniker) {
-          var moniker = scope.path.documentUrlFromNode(scriptElt);
+          moniker = scriptElt.ownerDocument.baseURI;
           // there could be more than one script this url
           var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
           // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
@@ -171,7 +168,7 @@ LoadTracker.prototype = {
       return;
     }
     if (this.pending <= 0 && this.callback) {
-      //console.log('done!', this.doc, scope.path.getDocumentUrl(this.doc));
+      //console.log('done!', this.doc, this.doc.baseURI);
       this.isOpen = false;
       this.callback();
     }
@@ -196,26 +193,6 @@ function inMainDocument(elt) {
     // TODO(sjmiles): ShadowDOMPolyfill intrusion
     elt.ownerDocument.impl === document;
 }
-
-/*
-if (scope.useNative) {
-  var path = scope.path;
-  importParser.selectors = [
-    'link[rel=' + IMPORT_LINK_TYPE + ']',
-    'link[rel=stylesheet]',
-    'style'
-  ];
-
-  var parseGeneric = importParser.parseGeneric;
-  importParser.parseGeneric = function(elt) {
-    if (elt.href) {
-      var url = path.documentUrlFromNode(elt);
-      path.resolveNodeAttributes(elt, url);
-    }
-    parseGeneric(elt);
-  };
-}
-*/
 
 // exports
 

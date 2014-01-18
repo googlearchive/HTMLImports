@@ -13,7 +13,6 @@ var IMPORT_LINK_TYPE = 'import';
 
 if (!useNative) {
   // imports
-  var path = scope.path;
   var Loader = scope.Loader;
   var xhr = scope.xhr;
 
@@ -118,8 +117,6 @@ if (!useNative) {
         if (!document) {
           // generate an HTMLDocument from data
           document = makeDocument(resource, url);
-          // resolve resource paths relative to host document
-          //path.resolvePathsInHTML(document);
           // cache document
           importer.documents[url] = document;
           // add nodes from this document to the loader queue
@@ -133,10 +130,6 @@ if (!useNative) {
       // TODO(sorvell): fails for nodes inside <template>.content
       // see https://code.google.com/p/chromium/issues/detail?id=249381.
       elt.__resource = resource;
-      // css path fixups
-      if (isStylesheetLink(elt)) {
-        path.resolvePathsInStylesheet(elt);
-      }
     }
   };
 

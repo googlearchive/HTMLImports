@@ -10,7 +10,6 @@ var thisFile = 'html-imports.js';
 var scopeName = 'HTMLImports';
 var modules = [
   'src/scope.js',
-  'src/path.js',
   'src/Loader.js',
   'src/HTMLImports.js',
   'src/Parser.js',

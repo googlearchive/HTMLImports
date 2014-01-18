@@ -29,10 +29,9 @@
       this.checkDone();
     },
     require: function(elt) {
-      var url = path.nodeUrl(elt);
+      var url = elt.src || elt.href;
       // ensure we have a standard url that can be used
       // reliably for deduping.
-      url = path.makeAbsUrl(url);
       // TODO(sjmiles): ad-hoc
       elt.__nodeUrl = url;
       // deduplication
