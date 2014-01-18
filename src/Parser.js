@@ -61,8 +61,10 @@ var importParser = {
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
       this.trackElement(linkElt);
-      if (linkElt.import) {
-        importParser.parse(linkElt.import, function() {
+      if (linkElt.__resource) {
+        importParser.parse(linkElt.__resource, function() {
+          // import is now ready so make available
+          linkElt.import = linkElt.__resource;
           // fire load event
           linkElt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
         });
