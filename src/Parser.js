@@ -72,6 +72,10 @@ var importParser = {
         linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
       }
     } else {
+      // make href relative to main document
+      if (needsMainDocumentContext(linkElt)) {
+        linkElt.href = linkElt.href;
+      }
       this.parseGeneric(linkElt);
     }
   },
@@ -126,10 +130,31 @@ var importParser = {
   }
 };
 
+// clone style with proper path resolution for main document
+// NOTE: styles are the only elements that require direct path fixup.
 function cloneStyle(style) {
   var clone = style.ownerDocument.createElement('style');
-  clone.textContent = style.textContent;
+  clone.textContent = relativeCssForStyle(style);
   return clone;
+}
+
+function relativeCssForStyle(style) {
+  var doc = style.ownerDocument;
+  var resolver = doc.createElement('a');
+  var cssText = replaceUrlsInCssText(style.textContent, resolver,
+      CSS_URL_REGEXP);
+  return replaceUrlsInCssText(cssText, resolver, CSS_IMPORT_REGEXP);  
+}
+
+var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
+var CSS_IMPORT_REGEXP = /(@import[\s]*)([^;]*)(;)/g;
+function replaceUrlsInCssText(cssText, resolver, regexp) {
+  return cssText.replace(regexp, function(m, pre, url, post) {
+    var urlPath = url.replace(/["']/g, '');
+    resolver.href = urlPath;
+    urlPath = resolver.href;
+    return pre + '\'' + urlPath + '\'' + post;
+  });
 }
 
 function LoadTracker(doc, callback) {
