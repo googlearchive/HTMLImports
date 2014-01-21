@@ -27,63 +27,45 @@ var importParser = {
     var next = this.nextToParse();
     if (next) {
       this.parse(next);
-      this.parseNext();
     }
   },
   parse: function(elt) {
+    if (elt.__importParsed) {
+      console.log('[%s] is already parsed', elt.localName);
+      return;
+    }
     var fn = this[this.map[elt.localName]];
     if (fn) {
-      elt.__parsed = true;
+      this.markParsing(elt);
       fn.call(this, elt);
     }
   },
-  parseImport: function(doc, done) {
-    if (!doc.__importParsed) {
-      // only parse once
-      doc.__importParsed = true;
-      if (done) {
-        done();
-      }
-      return;
-      var tracker = new LoadTracker(document, done);
-      /*
-      // all parsable elements in inDocument (depth-first pre-order traversal)
-      var elts = document.querySelectorAll(importParser.selectors);
-      // memoize the number of scripts
-      var scriptCount = document.scripts ? document.scripts.length : 0;
-      // for each parsable node type, call the mapped parsing method
-      for (var i=0, e; i<elts.length && (e=elts[i]); i++) {
-        this.parseElement(e);
-        // if a script was injected, we need to requery our nodes
-        // TODO(sjmiles): injecting nodes above the current script will
-        // result in errors
-        if (document.scripts && scriptCount !== document.scripts.length) {
-          // memoize the new count
-          scriptCount = document.scripts.length;
-          // ensure we have any new nodes in our list
-          elts = document.querySelectorAll(importParser.selectors);
-        }
-      }
-      */
-      //console.groupEnd('parsing', document.baseURI);
-      tracker.open();
-    } else if (done) {
-      done();
+  markParsing: function(elt) {
+    console.log('parsing', elt.localName, elt.href || elt.src);
+    this.parsingElement = elt;
+  },
+  markParsingComplete: function(elt) {
+    elt.__importParsed = true;
+    if (elt.__importElement) {
+      elt.__importElement.__importParsed = true;
     }
+    this.parsingElement = null;
+    this.parseNext();
+  },
+  parseImport: function(elt) {
+    elt.import = elt.__resource;
+    // TODO(sorvell): onerror
+    // fire load event
+    if (elt.__resource) {
+      elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));    
+    } else {
+      elt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
+    }
+    this.markParsingComplete(elt);
   },
   parseLink: function(linkElt) {
     if (isDocumentLink(linkElt)) {
-      this.trackElement(linkElt);
-      if (linkElt.__resource) {
-        importParser.parse(linkElt.__resource, function() {
-          // import is now ready so make available
-          linkElt.import = linkElt.__resource;
-          // fire load event
-          linkElt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
-        });
-      } else {
-        linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
-      }
+      this.parseImport(linkElt);
     } else {
       // make href relative to main document
       if (needsMainDocumentContext(linkElt)) {
@@ -92,16 +74,11 @@ var importParser = {
       this.parseGeneric(linkElt);
     }
   },
-  trackElement: function(elt) {
-    return;
-    // IE doesn't fire load on style elements
-    if (!isIe || elt.localName !== 'style') {
-      elt.ownerDocument.__loadTracker.require(elt);
-    }
-  },
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
+    var src = elt;
     elt = needsMainDocumentContext(elt) ? cloneStyle(elt) : elt;
+    elt.__importElement = src;
     this.parseGeneric(elt);
   },
   parseGeneric: function(elt) {
@@ -114,6 +91,14 @@ var importParser = {
       this.trackElement(elt);
       document.head.appendChild(elt);
     }
+  },
+  trackElement: function(elt) {
+    var self = this;
+    var done = function() {
+      self.markParsingComplete(elt);
+    };
+    elt.addEventListener('load', done);
+    elt.addEventListener('error', done);
   },
   parseScript: function(scriptElt) {
     if (needsMainDocumentContext(scriptElt)) {
@@ -141,25 +126,30 @@ var importParser = {
         scope.currentScript = null;
       }
     }
+    this.markParsingComplete();
   },
   nextToParse: function() {
-    return this.nextToParseInDoc(document);
+    return !this.parsingElement && this.nextToParseInDoc(document);
   },
   nextToParseInDoc: function(doc) {
     var nodes = doc.querySelectorAll(this.selectors);
     for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
-      if (!n.__parsed) {
-        return (nodeIsImport(n) && n.__resource) ?
-            this.nextToParseInDoc(n.__resource) || n :
-            n;
+      if (this.canParse(n)) {
+        return nodeIsImport(n) ? this.nextToParseInDoc(n.__resource) || n : n;
       }
     }
-  }/*,
+  },
   canParse: function(node) {
-    var doc = node.ownerDocument;
-    return nextImportToParse() === node;
-  }*/
+    var parseable = !node.__importParsed;
+    return parseable && this.hasResource(node);
+  },
+  hasResource: function(node) {
+    return (!(nodeIsImport(node) || (node.localName === 'script')) ||
+        node.__resource);
+  }
 };
+
+
 
 // clone style with proper path resolution for main document
 // NOTE: styles are the only elements that require direct path fixup.

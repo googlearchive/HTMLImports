@@ -93,7 +93,7 @@ if (!useNative) {
       return nodes;
     },
     loaded: function(url, elt, resource) {
-      console.log('loaded', url, elt);
+      //console.log('loaded', url, elt);
       // store generic resource
       // TODO(sorvell): fails for nodes inside <template>.content
       // see https://code.google.com/p/chromium/issues/detail?id=249381.
@@ -120,7 +120,6 @@ if (!useNative) {
       parser.parseNext();
     },
     loadedAll: function() {
-      console.log('all done loading!')
       parser.parseNext();
     }
   };
