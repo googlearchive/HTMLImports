@@ -124,7 +124,7 @@ if (!useNative) {
         }
         // don't store import record until we're actually loaded
         // store document resource
-        elt.content = resource = document;
+        elt.import = elt.content = resource = document;
       }
       // store generic resource
       // TODO(sorvell): fails for nodes inside <template>.content
@@ -213,7 +213,7 @@ function whenImportsReady(callback, doc) {
   }
   var imports = doc.querySelectorAll('link[rel=import');
   var loaded = 0, l = imports.length;
-  function checkDone(d) {  
+  function checkDone(d) { 
     if (loaded == l) {
       // go async to ensure parser isn't stuck on a script tag
       requestAnimationFrame(callback);
@@ -230,6 +230,7 @@ function whenImportsReady(callback, doc) {
         loadedImport.call(imp);
       } else {
         imp.addEventListener('load', loadedImport);
+        imp.addEventListener('error', loadedImport);
       }
     }
   } else {
@@ -238,7 +239,8 @@ function whenImportsReady(callback, doc) {
 }
 
 function isImportLoaded(link) {
-  return link.import && (link.import.readyState !== 'loading');
+  return useNative ? (link.import && (link.import.readyState !== 'loading')) :
+      link.__importParsed;
 }
 
 // exports

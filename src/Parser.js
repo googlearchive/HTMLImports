@@ -10,6 +10,7 @@ var path = scope.path;
 
 var IMPORT_LINK_TYPE = 'import';
 var isIe = /Trident/.test(navigator.userAgent)
+
 // highlander object for parsing a document tree
 
 var importParser = {
@@ -63,14 +64,13 @@ var importParser = {
       this.trackElement(linkElt);
       if (linkElt.__resource) {
         importParser.parse(linkElt.__resource, function() {
-          // import is now ready so make available
-          linkElt.import = linkElt.__resource;
           // fire load event
           linkElt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
         });
       } else {
         linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
       }
+      linkElt.__importParsed = true;
     } else {
       // make href relative to main document
       if (needsMainDocumentContext(linkElt)) {
