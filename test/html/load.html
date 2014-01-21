@@ -7,7 +7,7 @@
       (function() {
         function importLoaded(event) {
           window.loadEvents++;
-          if (event.target.import) {
+          if (event.type === 'load' && event.target.import) {
             var s = event.target.import.querySelector('script');
             chai.assert.ok(s, 'load event target can be used to find element in import');
           }
@@ -28,7 +28,9 @@
     <div id="test3" class="image"></div>
     <script>
       document.addEventListener('HTMLImportsLoaded', function() {
-        chai.assert.equal(loadEvents, 3, 'expected # of load events');
+        // TODO(sorvell): onerror doesn't work in native, filing bug...
+        var num = HTMLImports.useNative ? 2 : 3;
+        chai.assert.equal(loadEvents, num, 'expected # of load events');
         var test1 = getComputedStyle(document.querySelector('#test1')).backgroundColor;
         chai.assert.equal(test1, 'rgb(255, 0, 0)');
         var test2 = getComputedStyle(document.querySelector('#test2')).backgroundColor;

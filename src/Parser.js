@@ -8,7 +8,6 @@
 
 var IMPORT_LINK_TYPE = 'import';
 var isIe = /Trident/.test(navigator.userAgent)
-
 // highlander object for parsing a document tree
 var importParser = {
   selectors: [
@@ -53,7 +52,6 @@ var importParser = {
     this.parseNext();
   },
   parseImport: function(elt) {
-    elt.import = elt.__resource;
     // TODO(sorvell): onerror
     // fire load event
     if (elt.__resource) {
