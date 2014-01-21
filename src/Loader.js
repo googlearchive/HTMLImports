@@ -12,8 +12,9 @@
 
   var cache = {};
 
-  var Loader = function(onLoad, onComplete) {
+  var Loader = function(onLoad, onError, onComplete) {
     this.onload = onLoad;
+    this.onerror = onError;
     this.oncomplete = onComplete;
     this.inflight = 0;
     this.pending = {};
@@ -24,7 +25,17 @@
       // number of transactions to complete
       this.inflight += nodes.length;
       // commence transactions
-      forEach(nodes, this.require, this);
+      for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+        this.require(n);
+      }
+      // anything to do?
+      this.checkDone();
+    },
+    addNode: function(node) {
+      // number of transactions to complete
+      this.inflight++;
+      // commence transactions
+      this.require(node);
       // anything to do?
       this.checkDone();
     },
@@ -47,7 +58,7 @@
         // don't need fetch
         return true;
       }
-      if (this.cache[url]) {
+      if (cache[url]) {
         // complete load using cache data
         this.onload(url, elt, cache[url]);
         // finished this transaction
@@ -83,12 +94,15 @@
       if (!err) {
         cache[url] = resource;
       }
-      this.pending[url].forEach(function(e) {
+      var $p = this.pending[url];
+      for (var i=0, l=$p.length, p; (i<l) && (p=$p[i]); i++) {
         if (!err) {
-          this.onload(url, e, resource);
+          this.onload(url, p, resource);
+        } else {
+          this.onerror(url, p);
         }
         this.tail();
-      }, this);
+      }
       this.pending[url] = null;
     },
     tail: function() {
@@ -128,8 +142,6 @@
       this.load(url, next, nextContext).responseType = 'document';
     }
   };
-
-  var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
   // exports
   scope.xhr = xhr;

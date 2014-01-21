@@ -11,8 +11,9 @@ var scopeName = 'HTMLImports';
 var modules = [
   'src/scope.js',
   'src/Loader.js',
-  'src/HTMLImports.js',
   'src/Parser.js',
+  'src/HTMLImports.js',
+  'src/Observer.js',
   'src/boot.js'
 ];
 

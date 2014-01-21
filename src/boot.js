@@ -23,39 +23,17 @@ if (typeof window.CustomEvent !== 'function') {
 var doc = window.ShadowDOMPolyfill ? 
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
-function notifyReady() {
+HTMLImports.whenImportsReady(function() {
   HTMLImports.ready = true;
   HTMLImports.readyTime = new Date().getTime();
   //console.log('HTMLImportsLoaded');
   doc.dispatchEvent(
     new CustomEvent('HTMLImportsLoaded', {bubbles: true})
   );
-}
+});
 
 if (!HTMLImports.useNative) {
-  function bootstrap() {
-    if (!HTMLImports.useNative) {
-      // preload document resource trees
-      HTMLImports.importer.load(doc, function() {
-        HTMLImports.parser.parse(doc);
-      });
-    }
-  }
-
-  // Allow for asynchronous loading when minified
-  // readyState 'interactive' is expected when loaded with 'async' or 'defer' attributes
-  // note: use interactive state only when not on IE since it can become 
-  // interactive early (see https://github.com/mobify/mobifyjs/issues/136)
-  if (document.readyState === 'complete' ||
-      (document.readyState === 'interactive' && !window.attachEvent)) {
-    bootstrap();
-  } else {
-    document.addEventListener('DOMContentLoaded', bootstrap);
-  }
+  HTMLImports.observe(doc);
 }
-
-HTMLImports.whenImportsReady(function() {
-  notifyReady();
-});
 
 })();

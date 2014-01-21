@@ -13,7 +13,6 @@ var IMPORT_LINK_TYPE = 'import';
 
 if (!useNative) {
   // imports
-  var Loader = scope.Loader;
   var xhr = scope.xhr;
 
   // importer
@@ -34,55 +33,38 @@ if (!useNative) {
   // linked style sheets in an <element> are loaded, and the content gets path fixups
   // inline style sheets get path fixups when their containing import modifies paths
 
-  var importLoader;
   var STYLE_LINK_TYPE = 'stylesheet';
+  var Loader = scope.Loader;
+  var parser = scope.parser;
 
   var importer = {
     documents: {},
-    cache: {},
     preloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']',
       'template',
       'script[src]:not([type])',
       'script[src][type="text/javascript"]'
     ].join(','),
-    loader: function(next) {
-      if (importLoader && importLoader.inflight) {
-        var currentComplete = importLoader.oncomplete;
-        importLoader.oncomplete = function() {
-          currentComplete();
-          next();
-        }
-        return importLoader;
-      }
-      // construct a loader instance
-      importLoader = new Loader(importer.loaded, next);
-      // alias the importer cache (for debugging)
-      importLoader.cache = importer.cache;
-      return importLoader;
+    loadNode: function(node) {
+      importLoader.addNode(node);
     },
-    load: function(doc, next) {
-      // get a loader instance from the factory
-      importLoader = importer.loader(next);
-      // add nodes from document into loader queue
-      importer.preload(doc);
-    },
-    preload: function(doc) {
-      var nodes = this.marshalNodes(doc);
+    loadSubtree: function(parent) {
+      var nodes = this.marshalNodes(parent);
       // add these nodes to loader's queue
       importLoader.addNodes(nodes);
     },
-    marshalNodes: function(doc) {
+    marshalNodes: function(parent) {
       // all preloadable nodes in inDocument
-      var nodes = doc.querySelectorAll(importer.preloadSelectors);
+      var nodes = parent.querySelectorAll(importer.preloadSelectors);
       // from the main document, only load imports
       // TODO(sjmiles): do this by altering the selector list instead
-      nodes = this.filterMainDocumentNodes(doc, nodes);
+      nodes = this.filterMainDocumentNodes(parent, nodes);
       // extra link nodes from templates, filter templates out of the nodes list
       nodes = this.extractTemplateNodes(nodes);
       return nodes;
     },
-    filterMainDocumentNodes: function(doc, nodes) {
+    filterMainDocumentNodes: function(parent, nodes) {
+      var doc = parent.ownerDocument || parent;
       if (doc === document) {
         nodes = Array.prototype.filter.call(nodes, function(n) {
           return !isScript(n);
@@ -111,27 +93,40 @@ if (!useNative) {
       return nodes;
     },
     loaded: function(url, elt, resource) {
-      if (isDocumentLink(elt)) {
-        var document = importer.documents[url];
-        // if we've never seen a document at this url
-        if (!document) {
-          // generate an HTMLDocument from data
-          document = makeDocument(resource, url);
-          // cache document
-          importer.documents[url] = document;
-          // add nodes from this document to the loader queue
-          importer.preload(document);
-        }
-        // don't store import record until we're actually loaded
-        // store document resource
-        elt.content = resource = document;
-      }
+      console.log('loaded', url, elt);
       // store generic resource
       // TODO(sorvell): fails for nodes inside <template>.content
       // see https://code.google.com/p/chromium/issues/detail?id=249381.
       elt.__resource = resource;
+      if (isDocumentLink(elt)) {
+        var doc = importer.documents[url];
+        // if we've never seen a document at this url
+        if (!doc) {
+          // generate an HTMLDocument from data
+          doc = makeDocument(resource, url);
+          // TODO(sorvell): we cannot use MO to detect parsed nodes because
+          // SD polyfill does not report these as mutations.
+          importer.loadSubtree(doc);
+          importer.observe(doc);
+          // cache document
+          importer.documents[url] = doc;
+        }
+        elt.__resource = doc;
+      }
+      parser.parseNext();
+    },
+    errored: function(url, elt) {
+      elt.__resource = null;
+      parser.parseNext();
+    },
+    loadedAll: function() {
+      console.log('all done loading!')
+      parser.parseNext();
     }
   };
+
+  var importLoader = new Loader(importer.loaded, importer.errored,
+      importer.loadedAll);
 
   function isDocumentLink(elt) {
     return isLinkRel(elt, IMPORT_LINK_TYPE);
@@ -178,8 +173,6 @@ if (!useNative) {
     }
     return doc;
   }
-
-  var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
   // exports
   scope.importer = importer;

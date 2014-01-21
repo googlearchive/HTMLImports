@@ -6,12 +6,10 @@
 
 (function(scope) {
 
-var path = scope.path;
-
 var IMPORT_LINK_TYPE = 'import';
 var isIe = /Trident/.test(navigator.userAgent)
-// highlander object for parsing a document tree
 
+// highlander object for parsing a document tree
 var importParser = {
   selectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
@@ -25,23 +23,37 @@ var importParser = {
     script: 'parseScript',
     style: 'parseStyle'
   },
-  // TODO(sorvell): because dynamic imports are not supported, users are 
-  // writing code like in https://github.com/Polymer/HTMLImports/issues/40
-  // as a workaround. The code here checking for the existence of
-  // document.scripts is here only to support the workaround.
-  parse: function(document, done) {
-    if (!document.__importParsed) {
+  parseNext: function() {
+    var next = this.nextToParse();
+    if (next) {
+      this.parse(next);
+      this.parseNext();
+    }
+  },
+  parse: function(elt) {
+    var fn = this[this.map[elt.localName]];
+    if (fn) {
+      elt.__parsed = true;
+      fn.call(this, elt);
+    }
+  },
+  parseImport: function(doc, done) {
+    if (!doc.__importParsed) {
       // only parse once
-      document.__importParsed = true;
-      //console.group('parsing', document.baseURI);
+      doc.__importParsed = true;
+      if (done) {
+        done();
+      }
+      return;
       var tracker = new LoadTracker(document, done);
+      /*
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = document.querySelectorAll(importParser.selectors);
       // memoize the number of scripts
       var scriptCount = document.scripts ? document.scripts.length : 0;
       // for each parsable node type, call the mapped parsing method
       for (var i=0, e; i<elts.length && (e=elts[i]); i++) {
-        importParser[importParser.map[e.localName]](e);
+        this.parseElement(e);
         // if a script was injected, we need to requery our nodes
         // TODO(sjmiles): injecting nodes above the current script will
         // result in errors
@@ -52,6 +64,7 @@ var importParser = {
           elts = document.querySelectorAll(importParser.selectors);
         }
       }
+      */
       //console.groupEnd('parsing', document.baseURI);
       tracker.open();
     } else if (done) {
@@ -80,6 +93,7 @@ var importParser = {
     }
   },
   trackElement: function(elt) {
+    return;
     // IE doesn't fire load on style elements
     if (!isIe || elt.localName !== 'style') {
       elt.ownerDocument.__loadTracker.require(elt);
@@ -127,7 +141,24 @@ var importParser = {
         scope.currentScript = null;
       }
     }
-  }
+  },
+  nextToParse: function() {
+    return this.nextToParseInDoc(document);
+  },
+  nextToParseInDoc: function(doc) {
+    var nodes = doc.querySelectorAll(this.selectors);
+    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+      if (!n.__parsed) {
+        return (nodeIsImport(n) && n.__resource) ?
+            this.nextToParseInDoc(n.__resource) || n :
+            n;
+      }
+    }
+  }/*,
+  canParse: function(node) {
+    var doc = node.ownerDocument;
+    return nextImportToParse() === node;
+  }*/
 };
 
 // clone style with proper path resolution for main document
@@ -200,7 +231,9 @@ LoadTracker.prototype = {
   }
 }
 
-var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
+function nodeIsImport(elt) {
+  return (elt.localName === 'link') && (elt.rel === 'import');
+}
 
 function isDocumentLink(elt) {
   return elt.localName === 'link'
@@ -220,7 +253,6 @@ function inMainDocument(elt) {
 }
 
 // exports
-
 scope.parser = importParser;
 
 })(HTMLImports);

@@ -21,14 +21,13 @@ function handler(mutations) {
     if (m.type === 'childList' && m.addedNodes.length) {
       addedNodes(m.addedNodes);
     }
-  });
+  }
 };
 
 function addedNodes(nodes) {
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
     if (shouldLoadNode(n)) {
-      // TODO(sorvell): need to add this api.
-      importer.addNode(n);
+      importer.loadNode(n);
       if (n.children && n.children.length) {
         addedNodes(n.children);
       }
@@ -37,7 +36,7 @@ function addedNodes(nodes) {
 }
 
 function shouldLoadNode(node) {
-  return matches.call(node, importer.preloadSelectors);
+  return (node.nodeType !== 3) && matches.call(node, importer.preloadSelectors);
 }
 
 var observer = new MutationObserver(handler);
@@ -46,19 +45,9 @@ function observe(root) {
   observer.observe(root, {childList: true, subtree: true});
 }
 
-// *****
-// TODO(sorvell): wip
-function canParse(node) {
-  var doc = node.ownerDocument;
-  return nextImportToParse(doc) === node;
-}
-
-function nextImportToParse() {
-  //doc.querySelectorAll(importSelector)
-}
-
-
 // exports
+// TODO(sorvell): factor so can put on scope
 scope.observe = observe;
+importer.observe = observe;
 
 })(HTMLImports);
