@@ -10,9 +10,8 @@
   var path = scope.path;
   var xhr = scope.xhr;
 
-  var cache = {};
-
   var Loader = function(onLoad, onComplete) {
+    this.cache = {};
     this.onload = onLoad;
     this.oncomplete = onComplete;
     this.inflight = 0;
@@ -49,7 +48,7 @@
       }
       if (this.cache[url]) {
         // complete load using cache data
-        this.onload(url, elt, cache[url]);
+        this.onload(url, elt, this.cache[url]);
         // finished this transaction
         this.tail();
         // don't need fetch
@@ -81,7 +80,7 @@
     },
     receive: function(url, elt, err, resource) {
       if (!err) {
-        cache[url] = resource;
+        this.cache[url] = resource;
       }
       this.pending[url].forEach(function(e) {
         if (!err) {
