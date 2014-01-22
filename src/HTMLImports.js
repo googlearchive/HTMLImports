@@ -211,7 +211,7 @@ function whenImportsReady(callback, doc) {
     })
     return;
   }
-  var imports = doc.querySelectorAll('link[rel=import');
+  var imports = doc.querySelectorAll('link[rel=import]');
   var loaded = 0, l = imports.length;
   function checkDone(d) { 
     if (loaded == l) {
