@@ -134,7 +134,8 @@ var importParser = {
 // NOTE: styles are the only elements that require direct path fixup.
 function cloneStyle(style) {
   var clone = style.ownerDocument.createElement('style');
-  clone.textContent = path.resolveUrlsInStyle(style);
+  clone.textContent = style.textContent;
+  path.resolveUrlsInStyle(clone);
   return clone;
 }
 
@@ -145,17 +146,21 @@ var path = {
   resolveUrlsInStyle: function(style) {
     var doc = style.ownerDocument;
     var resolver = doc.createElement('a');
-    var cssText = this.resolveUrlsInCssText(style.textContent, resolver,
-        CSS_URL_REGEXP);
-    return this.resolveUrlsInCssText(cssText, resolver, CSS_IMPORT_REGEXP);  
+    style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
+    return style;  
   },
-  resolveUrlsInCssText: function(cssText, resolver, regexp) {
-    return cssText.replace(regexp, function(m, pre, url, post) {
+  resolveUrlsInCssText: function(cssText, urlObj) {
+    var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
+    r = this.replaceUrls(r, urlObj, CSS_IMPORT_REGEXP);
+    return r;
+  },
+  replaceUrls: function(text, urlObj, regexp) {
+    return text.replace(regexp, function(m, pre, url, post) {
       var urlPath = url.replace(/["']/g, '');
-      resolver.href = urlPath;
-      urlPath = resolver.href;
+      urlObj.href = urlPath;
+      urlPath = urlObj.href;
       return pre + '\'' + urlPath + '\'' + post;
-    });
+    });    
   }
 }
 
