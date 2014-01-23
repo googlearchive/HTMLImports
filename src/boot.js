@@ -26,7 +26,6 @@ var doc = window.ShadowDOMPolyfill ?
 function notifyReady() {
   HTMLImports.ready = true;
   HTMLImports.readyTime = new Date().getTime();
-  //console.log('HTMLImportsLoaded');
   doc.dispatchEvent(
     new CustomEvent('HTMLImportsLoaded', {bubbles: true})
   );

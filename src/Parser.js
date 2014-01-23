@@ -30,14 +30,14 @@ var importParser = {
   // writing code like in https://github.com/Polymer/HTMLImports/issues/40
   // as a workaround. The code here checking for the existence of
   // document.scripts is here only to support the workaround.
-  parse: function(document, done) {
-    if (!document.__importParsed) {
+  parse: function(doc, done) {
+    if (!doc.__importParsed) {
       // only parse once
-      document.__importParsed = true;
+      doc.__importParsed = true;
       //console.group('parsing', document.baseURI);
-      var tracker = new LoadTracker(document, done);
+      var tracker = new LoadTracker(doc, done);
       // all parsable elements in inDocument (depth-first pre-order traversal)
-      var elts = document.querySelectorAll(importParser.selectors);
+      var elts = doc.querySelectorAll(importParser.selectors);
       // memoize the number of scripts
       var scriptCount = document.scripts ? document.scripts.length : 0;
       // for each parsable node type, call the mapped parsing method
@@ -50,7 +50,7 @@ var importParser = {
           // memoize the new count
           scriptCount = document.scripts.length;
           // ensure we have any new nodes in our list
-          elts = document.querySelectorAll(importParser.selectors);
+          elts = doc.querySelectorAll(importParser.selectors);
         }
       }
       //console.groupEnd('parsing', document.baseURI);
@@ -65,10 +65,22 @@ var importParser = {
       if (linkElt.__resource) {
         importParser.parse(linkElt.__resource, function() {
           // fire load event
+          //console.log(linkElt, 'load', linkElt.ownerDocument.baseURI, linkElt.import.baseURI);
           linkElt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
         });
       } else {
         linkElt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
+      }
+      // TODO(sorvell): workaround for Safari addEventListener not working
+      // for elements not in the main document.
+      if (linkElt.__pending) {
+        var fn;
+        while (linkElt.__pending.length) {
+          fn = linkElt.__pending.shift();
+          if (fn) {
+            fn({target: linkElt});
+          }
+        }
       }
       linkElt.__importParsed = true;
     } else {
@@ -174,6 +186,7 @@ LoadTracker.prototype = {
   pending: 0,
   isOpen: false,
   open: function() {
+    //console.log('tracking for', this.doc.baseURI);
     this.isOpen = true;
     this.checkDone();
   },
@@ -182,17 +195,29 @@ LoadTracker.prototype = {
   },
   require: function(elt) {
     this.add();
-    //console.log('require', elt, this.pending);
-    var names = ['load', 'error'], self = this;
-    for (var i=0, l=names.length, n; (i<l) && (n=names[i]); i++) {
-      elt.addEventListener(n, function(e) {
-        self.receive(e);
-      });
+    //console.log(this.doc.baseURI, 'requires', elt, elt.href, this.pending);
+    var self = this;
+    var fn = function(e) {
+      self.receive(e);
+    }
+    // TODO(sorvell): file bug; in Safari we cannot rely on events if the
+    // element ownerDocument is not the main document. 
+    // Workaround this for import links (the only elements in these documents
+    // we care to track) by directly sticking callbacks
+    // on the element.
+    if (isDocumentLink(elt)) {
+      elt.__pending = elt.__pending || [];
+      elt.__pending.push(fn);
+    } else {
+      var names = ['load', 'error'];
+      for (var i=0, l=names.length, n; (i<l) && (n=names[i]); i++) {
+        elt.addEventListener(n, fn);
+      }
     }
   },
   receive: function(e) {
     this.pending--;
-    //console.log('receive', e.target, this.pending);
+    //console.log(this.doc.baseURI, 'receives', e.target.href, this.pending);
     this.checkDone();
   },
   checkDone: function() {
@@ -230,5 +255,6 @@ function inMainDocument(elt) {
 
 scope.parser = importParser;
 scope.path = path;
+scope.isIE = isIe;
 
 })(HTMLImports);
