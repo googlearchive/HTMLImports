@@ -59,6 +59,17 @@ var importParser = {
     } else {
       elt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
     }
+    // TODO(sorvell): workaround for Safari addEventListener not working
+    // for elements not in the main document.
+    if (linkElt.__pending) {
+      var fn;
+      while (linkElt.__pending.length) {
+        fn = linkElt.__pending.shift();
+        if (fn) {
+          fn({target: linkElt});
+        }
+      }
+    }
     this.markParsingComplete(elt);
   },
   parseLink: function(linkElt) {
@@ -153,69 +164,33 @@ var importParser = {
 // NOTE: styles are the only elements that require direct path fixup.
 function cloneStyle(style) {
   var clone = style.ownerDocument.createElement('style');
-  clone.textContent = relativeCssForStyle(style);
+  clone.textContent = style.textContent;
+  path.resolveUrlsInStyle(clone);
   return clone;
-}
-
-function relativeCssForStyle(style) {
-  var doc = style.ownerDocument;
-  var resolver = doc.createElement('a');
-  var cssText = replaceUrlsInCssText(style.textContent, resolver,
-      CSS_URL_REGEXP);
-  return replaceUrlsInCssText(cssText, resolver, CSS_IMPORT_REGEXP);  
 }
 
 var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]*)([^;]*)(;)/g;
-function replaceUrlsInCssText(cssText, resolver, regexp) {
-  return cssText.replace(regexp, function(m, pre, url, post) {
-    var urlPath = url.replace(/["']/g, '');
-    resolver.href = urlPath;
-    urlPath = resolver.href;
-    return pre + '\'' + urlPath + '\'' + post;
-  });
-}
 
-function LoadTracker(doc, callback) {
-  this.doc = doc;
-  this.doc.__loadTracker = this;
-  this.callback = callback;
-}
-
-LoadTracker.prototype = {
-  pending: 0,
-  isOpen: false,
-  open: function() {
-    this.isOpen = true;
-    this.checkDone();
+var path = {
+  resolveUrlsInStyle: function(style) {
+    var doc = style.ownerDocument;
+    var resolver = doc.createElement('a');
+    style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
+    return style;  
   },
-  add: function() {
-    this.pending++;
+  resolveUrlsInCssText: function(cssText, urlObj) {
+    var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
+    r = this.replaceUrls(r, urlObj, CSS_IMPORT_REGEXP);
+    return r;
   },
-  require: function(elt) {
-    this.add();
-    //console.log('require', elt, this.pending);
-    var names = ['load', 'error'], self = this;
-    for (var i=0, l=names.length, n; (i<l) && (n=names[i]); i++) {
-      elt.addEventListener(n, function(e) {
-        self.receive(e);
-      });
-    }
-  },
-  receive: function(e) {
-    this.pending--;
-    //console.log('receive', e.target, this.pending);
-    this.checkDone();
-  },
-  checkDone: function() {
-    if (!this.isOpen) {
-      return;
-    }
-    if (this.pending <= 0 && this.callback) {
-      //console.log('done!', this.doc, this.doc.baseURI);
-      this.isOpen = false;
-      this.callback();
-    }
+  replaceUrls: function(text, urlObj, regexp) {
+    return text.replace(regexp, function(m, pre, url, post) {
+      var urlPath = url.replace(/["']/g, '');
+      urlObj.href = urlPath;
+      urlPath = urlObj.href;
+      return pre + '\'' + urlPath + '\'' + post;
+    });    
   }
 }
 
@@ -242,5 +217,7 @@ function inMainDocument(elt) {
 
 // exports
 scope.parser = importParser;
+scope.path = path;
+scope.isIE = isIe;
 
 })(HTMLImports);

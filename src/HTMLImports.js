@@ -111,7 +111,10 @@ if (!useNative) {
           // cache document
           importer.documents[url] = doc;
         }
-        elt.import = doc;
+        }
+        // don't store import record until we're actually loaded
+        // store document resource
+        elt.import = elt.content = resource = doc;
       }
       parser.parseNext();
     },
@@ -153,8 +156,11 @@ if (!useNative) {
     doc._URL = url;
     // establish a relative path via <base>
     var base = doc.createElement('base');
-    //base.setAttribute('href', document.baseURI || document.URL);
     base.setAttribute('href', url);
+    // add baseURI support to browsers (IE) that lack it.
+    if (!doc.baseURI) {
+      doc.baseURI = url;
+    }
     doc.head.appendChild(base);
     // install HTML last as it may trigger CustomElement upgrades
     // TODO(sjmiles): problem wrt to template boostrapping below,
@@ -179,13 +185,16 @@ if (!useNative) {
   // do nothing if using native imports
 }
 
+var wrappedDoc = window.ShadowDOMPolyfill ? wrap(document) : document;
+
+
 // NOTE: We cannot polyfill document.currentScript because it's not possible
 // both to override and maintain the ability to capture the native value;
 // therefore we choose to expose _currentScript both when native imports
 // and the polyfill are in use.
-Object.defineProperty(document, '_currentScript', {
+Object.defineProperty(wrappedDoc, '_currentScript', {
   get: function() {
-    return HTMLImports.currentScript || document.currentScript;
+    return HTMLImports.currentScript || wrappedDoc.currentScript;
   },
   writeable: true,
   configurable: true
@@ -195,15 +204,22 @@ Object.defineProperty(document, '_currentScript', {
 // which may not be desireable; calls should resolve in the correct order,
 // however.
 function whenImportsReady(callback, doc) {
-  doc = doc || document;
+  doc = doc || wrappedDoc;
   // if document is loading, wait and try again
-  if (doc.readyState === 'loading') {
-    doc.addEventListener('DOMContentLoaded', function() {
-      whenImportsReady(callback, doc);
-    })
+  var requiredState = HTMLImports.isIE ? 'complete' : 'interactive';
+  var isReady = (doc.readyState === 'complete' ||
+      doc.readyState === requiredState);
+  if (!isReady) {
+    var checkReady = function(e) {
+      if (doc.readyState === 'complete' || doc.readyState === requiredState) {
+        doc.removeEventListener('readystatechange', checkReady)
+        whenImportsReady(callback, doc);
+      }
+    }
+    doc.addEventListener('readystatechange', checkReady)
     return;
   }
-  var imports = doc.querySelectorAll('link[rel=import');
+  var imports = doc.querySelectorAll('link[rel=import]');
   var loaded = 0, l = imports.length;
   function checkDone(d) { 
     if (loaded == l) {
