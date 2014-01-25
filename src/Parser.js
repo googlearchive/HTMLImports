@@ -39,16 +39,16 @@ var importParser = {
       // all parsable elements in inDocument (depth-first pre-order traversal)
       var elts = doc.querySelectorAll(importParser.selectors);
       // memoize the number of scripts
-      var scriptCount = document.scripts ? document.scripts.length : 0;
+      var scriptCount = doc.scripts ? doc.scripts.length : 0;
       // for each parsable node type, call the mapped parsing method
       for (var i=0, e; i<elts.length && (e=elts[i]); i++) {
         importParser[importParser.map[e.localName]](e);
         // if a script was injected, we need to requery our nodes
         // TODO(sjmiles): injecting nodes above the current script will
         // result in errors
-        if (document.scripts && scriptCount !== document.scripts.length) {
+        if (doc.scripts && scriptCount !== doc.scripts.length) {
           // memoize the new count
-          scriptCount = document.scripts.length;
+          scriptCount = doc.scripts.length;
           // ensure we have any new nodes in our list
           elts = doc.querySelectorAll(importParser.selectors);
         }
