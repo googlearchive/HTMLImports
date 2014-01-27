@@ -14,7 +14,8 @@ var IMPORT_LINK_TYPE = 'import';
 if (!useNative) {
   // imports
   var xhr = scope.xhr;
-
+  var Loader = scope.Loader;
+  var parser = scope.parser;
   // importer
   // highlander object represents a primary document (the argument to 'load')
   // at the root of a tree of documents
@@ -34,14 +35,14 @@ if (!useNative) {
   // inline style sheets get path fixups when their containing import modifies paths
 
   var STYLE_LINK_TYPE = 'stylesheet';
-  var Loader = scope.Loader;
-  var parser = scope.parser;
+  // TODO(sorvell): SD polyfill intrusion
+  var mainDoc = window.ShadowDOMPolyfill ? 
+    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
   var importer = {
     documents: {},
     preloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']',
-      'template',
       'script[src]:not([type])',
       'script[src][type="text/javascript"]'
     ].join(','),
@@ -58,37 +59,14 @@ if (!useNative) {
       var nodes = parent.querySelectorAll(importer.preloadSelectors);
       // from the main document, only load imports
       // TODO(sjmiles): do this by altering the selector list instead
-      nodes = this.filterMainDocumentNodes(parent, nodes);
-      // extra link nodes from templates, filter templates out of the nodes list
-      nodes = this.extractTemplateNodes(nodes);
-      return nodes;
+      return this.filterMainDocumentNodes(parent, nodes);
     },
-    filterMainDocumentNodes: function(parent, nodes) {
+    filterMainDocumentNodes: function(doc, nodes) {
       var doc = parent.ownerDocument || parent;
-      if (doc === document) {
+      if (doc === mainDoc) {
         nodes = Array.prototype.filter.call(nodes, function(n) {
           return !isScript(n);
         });
-      }
-      return nodes;
-    },
-    extractTemplateNodes: function(nodes) {
-      var extra = [];
-      nodes = Array.prototype.filter.call(nodes, function(n) {
-        if (n.localName === 'template') {
-          if (n.content) {
-            var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE +
-              ']');
-            if (l$.length) {
-              extra = extra.concat(Array.prototype.slice.call(l$, 0));
-            }
-          }
-          return false;
-        }
-        return true;
-      });
-      if (extra.length) {
-        nodes = nodes.concat(extra);
       }
       return nodes;
     },
