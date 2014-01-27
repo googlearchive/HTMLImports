@@ -36,13 +36,15 @@ if (!useNative) {
 
   var importLoader;
   var STYLE_LINK_TYPE = 'stylesheet';
+  // TODO(sorvell): SD polyfill intrusion
+  var mainDoc = window.ShadowDOMPolyfill ? 
+    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
   var importer = {
     documents: {},
     cache: {},
     preloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']',
-      'template',
       'script[src]:not([type])',
       'script[src][type="text/javascript"]'
     ].join(','),
@@ -81,7 +83,7 @@ if (!useNative) {
       return nodes;
     },
     filterMainDocumentNodes: function(doc, nodes) {
-      if (doc === document) {
+      if (doc === mainDoc) {
         nodes = Array.prototype.filter.call(nodes, function(n) {
           return !isScript(n);
         });
