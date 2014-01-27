@@ -78,8 +78,6 @@ if (!useNative) {
       // from the main document, only load imports
       // TODO(sjmiles): do this by altering the selector list instead
       nodes = this.filterMainDocumentNodes(doc, nodes);
-      // extra link nodes from templates, filter templates out of the nodes list
-      nodes = this.extractTemplateNodes(nodes);
       return nodes;
     },
     filterMainDocumentNodes: function(doc, nodes) {
@@ -87,26 +85,6 @@ if (!useNative) {
         nodes = Array.prototype.filter.call(nodes, function(n) {
           return !isScript(n);
         });
-      }
-      return nodes;
-    },
-    extractTemplateNodes: function(nodes) {
-      var extra = [];
-      nodes = Array.prototype.filter.call(nodes, function(n) {
-        if (n.localName === 'template') {
-          if (n.content) {
-            var l$ = n.content.querySelectorAll('link[rel=' + STYLE_LINK_TYPE +
-              ']');
-            if (l$.length) {
-              extra = extra.concat(Array.prototype.slice.call(l$, 0));
-            }
-          }
-          return false;
-        }
-        return true;
-      });
-      if (extra.length) {
-        nodes = nodes.concat(extra);
       }
       return nodes;
     },
