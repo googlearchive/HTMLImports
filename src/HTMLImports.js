@@ -147,11 +147,9 @@ if (!useNative) {
     }
     return doc;
   }
-
-  // exports
-  scope.importer = importer;
 } else {
   // do nothing if using native imports
+  var importer = {};
 }
 
 var wrappedDoc = window.ShadowDOMPolyfill ? wrap(document) : document;
@@ -223,6 +221,7 @@ function isImportLoaded(link) {
 // exports
 scope.hasNative = hasNative;
 scope.useNative = useNative;
+scope.importer = importer;
 scope.whenImportsReady = whenImportsReady;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.isImportLoaded = isImportLoaded;
