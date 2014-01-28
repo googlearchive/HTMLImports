@@ -16,11 +16,16 @@
           div.innerHTML = '<link rel="import" href="imports/load-1.html">' +
               '<link rel="import" href="imports/load-2.html">';
           document.body.appendChild(div);
-          // TODO(sorvell): workaround for missing support for dynamic imports.
-          HTMLImports.importer.load(div, function() {
-            HTMLImports.parser.parse(div);
-            chai.assert.ok(load1, 'dynamic import loaded');
-            chai.assert.ok(load2, 'dynamic import loaded');
+          var ports = document.querySelectorAll('link[rel=import]');
+          var loads = 0;
+          for (var i=0, l=ports.length, n; (i<l) && (n=ports[i]); i++) {
+            n.addEventListener('load', function(e) {
+              loads++;
+              chai.assert.ok(e.target.import);
+            });
+          }
+          HTMLImports.whenImportsReady(function() {
+            chai.assert.equal(loads, 2);
             done();
           });
         });

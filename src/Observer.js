@@ -28,15 +28,16 @@ function addedNodes(nodes) {
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
     if (shouldLoadNode(n)) {
       importer.loadNode(n);
-      if (n.children && n.children.length) {
-        addedNodes(n.children);
-      }
+    }
+    if (n.children && n.children.length) {
+      addedNodes(n.children);
     }
   }
 }
 
 function shouldLoadNode(node) {
-  return (node.nodeType !== 3) && matches.call(node, importer.preloadSelectors);
+  return (node.nodeType === 1) && matches.call(node,
+      importer.loadSelectorsForNode(node));
 }
 
 var observer = new MutationObserver(handler);

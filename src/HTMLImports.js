@@ -7,7 +7,8 @@
 (function(scope) {
 
 var hasNative = ('import' in document.createElement('link'));
-var useNative = !scope.flags.imports && hasNative;
+var flags = scope.flags;
+var useNative = !flags.imports && hasNative;
 
 var IMPORT_LINK_TYPE = 'import';
 
@@ -41,10 +42,11 @@ if (!useNative) {
 
   var importer = {
     documents: {},
-    preloadSelectors: [
-      'link[rel=' + IMPORT_LINK_TYPE + ']',
-      'script[src]:not([type])',
-      'script[src][type="text/javascript"]'
+    documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+    importsPreloadSelectors: [
+        'link[rel=' + IMPORT_LINK_TYPE + ']',
+        'script[src]:not([type])',
+        'script[src][type="text/javascript"]'
     ].join(','),
     loadNode: function(node) {
       importLoader.addNode(node);
@@ -56,22 +58,15 @@ if (!useNative) {
     },
     marshalNodes: function(parent) {
       // all preloadable nodes in inDocument
-      var nodes = parent.querySelectorAll(importer.preloadSelectors);
-      // from the main document, only load imports
-      // TODO(sjmiles): do this by altering the selector list instead
-      return this.filterMainDocumentNodes(parent, nodes);
+      return parent.querySelectorAll(this.loadSelectorsForNode(parent));
     },
-    filterMainDocumentNodes: function(doc, nodes) {
-      var doc = parent.ownerDocument || parent;
-      if (doc === mainDoc) {
-        nodes = Array.prototype.filter.call(nodes, function(n) {
-          return !isScript(n);
-        });
-      }
-      return nodes;
+    loadSelectorsForNode: function(node) {
+      var doc = node.ownerDocument || node;
+      return doc === mainDoc ? this.documentPreloadSelectors :
+          this.importsPreloadSelectors;
     },
     loaded: function(url, elt, resource) {
-      //console.log('loaded', url, elt);
+      flags.load && console.log('loaded', url, elt);
       // store generic resource
       // TODO(sorvell): fails for nodes inside <template>.content
       // see https://code.google.com/p/chromium/issues/detail?id=249381.
@@ -82,6 +77,7 @@ if (!useNative) {
         if (!doc) {
           // generate an HTMLDocument from data
           doc = makeDocument(resource, url);
+          doc.__importLink = elt;
           // TODO(sorvell): we cannot use MO to detect parsed nodes because
           // SD polyfill does not report these as mutations.
           importer.loadSubtree(doc);
@@ -89,15 +85,10 @@ if (!useNative) {
           // cache document
           importer.documents[url] = doc;
         }
-        }
         // don't store import record until we're actually loaded
         // store document resource
-        elt.import = elt.content = resource = doc;
+        elt.import = doc;
       }
-      parser.parseNext();
-    },
-    errored: function(url, elt) {
-      elt.__resource = null;
       parser.parseNext();
     },
     loadedAll: function() {
@@ -105,8 +96,8 @@ if (!useNative) {
     }
   };
 
-  var importLoader = new Loader(importer.loaded, importer.errored,
-      importer.loadedAll);
+  var importLoader = new Loader(importer.loaded.bind(importer), 
+      importer.loadedAll.bind(importer));
 
   function isDocumentLink(elt) {
     return isLinkRel(elt, IMPORT_LINK_TYPE);
@@ -235,5 +226,6 @@ scope.useNative = useNative;
 scope.whenImportsReady = whenImportsReady;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.isImportLoaded = isImportLoaded;
+scope.importLoader = importLoader;
 
 })(window.HTMLImports);

@@ -7,16 +7,23 @@
 (function(scope) {
 
 var IMPORT_LINK_TYPE = 'import';
-var isIe = /Trident/.test(navigator.userAgent)
+var flags = scope.flags;
+var isIe = /Trident/.test(navigator.userAgent);
+// TODO(sorvell): SD polyfill intrusion
+var mainDoc = window.ShadowDOMPolyfill ? 
+    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+
+
 // highlander object for parsing a document tree
 var importParser = {
-  selectors: [
+  documentSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+  importsSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'link[rel=stylesheet]',
     'style',
     'script:not([type])',
     'script[type="text/javascript"]'
-  ],
+  ].join(','),
   map: {
     link: 'parseLink',
     script: 'parseScript',
@@ -24,13 +31,14 @@ var importParser = {
   },
   parseNext: function() {
     var next = this.nextToParse();
+    //console.log('parseNext', next);
     if (next) {
       this.parse(next);
     }
   },
   parse: function(elt) {
-    if (elt.__importParsed) {
-      console.log('[%s] is already parsed', elt.localName);
+    if (this.isParsed(elt)) {
+      flags.parse && console.log('[%s] is already parsed', elt.localName);
       return;
     }
     var fn = this[this.map[elt.localName]];
@@ -40,7 +48,7 @@ var importParser = {
     }
   },
   markParsing: function(elt) {
-    console.log('parsing', elt.localName, elt.href || elt.src);
+    flags.parse && console.log('parsing', elt);
     this.parsingElement = elt;
   },
   markParsingComplete: function(elt) {
@@ -49,9 +57,11 @@ var importParser = {
       elt.__importElement.__importParsed = true;
     }
     this.parsingElement = null;
+    flags.parse && console.log('completed', elt);
     this.parseNext();
   },
   parseImport: function(elt) {
+    elt.import.__importParsed = true;
     // TODO(sorvell): onerror
     // fire load event
     if (elt.__resource) {
@@ -61,45 +71,36 @@ var importParser = {
     }
     // TODO(sorvell): workaround for Safari addEventListener not working
     // for elements not in the main document.
-    if (linkElt.__pending) {
+    if (elt.__pending) {
       var fn;
-      while (linkElt.__pending.length) {
-        fn = linkElt.__pending.shift();
+      while (elt.__pending.length) {
+        fn = elt.__pending.shift();
         if (fn) {
-          fn({target: linkElt});
+          fn({target: elt});
         }
       }
     }
     this.markParsingComplete(elt);
   },
   parseLink: function(linkElt) {
-    if (isDocumentLink(linkElt)) {
+    if (nodeIsImport(linkElt)) {
       this.parseImport(linkElt);
     } else {
-      // make href relative to main document
-      if (needsMainDocumentContext(linkElt)) {
-        linkElt.href = linkElt.href;
-      }
+      // make href absolute
+      linkElt.href = linkElt.href;
       this.parseGeneric(linkElt);
     }
   },
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
     var src = elt;
-    elt = needsMainDocumentContext(elt) ? cloneStyle(elt) : elt;
+    elt = cloneStyle(elt);
     elt.__importElement = src;
     this.parseGeneric(elt);
   },
   parseGeneric: function(elt) {
-    // TODO(sorvell): because of a style element needs to be out of 
-    // tree to fire the load event, avoid the check for parentNode that
-    // needsMainDocumentContext does. Why was that necessary? if it is, 
-    // refactor this.
-    //if (needsMainDocumentContext(elt)) {
-    if (!inMainDocument(elt)) {
-      this.trackElement(elt);
-      document.head.appendChild(elt);
-    }
+    this.trackElement(elt);
+    document.head.appendChild(elt);
   },
   trackElement: function(elt) {
     var self = this;
@@ -110,51 +111,63 @@ var importParser = {
     elt.addEventListener('error', done);
   },
   parseScript: function(scriptElt) {
-    if (needsMainDocumentContext(scriptElt)) {
-      // acquire code to execute
-      var code = (scriptElt.__resource || scriptElt.textContent).trim();
-      if (code) {
-        // calculate source map hint
-        var moniker = scriptElt.__nodeUrl;
-        if (!moniker) {
-          moniker = scriptElt.ownerDocument.baseURI;
-          // there could be more than one script this url
-          var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
-          // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
-          // this sort of thing
-          var matches = code.match(/Polymer\(['"]([^'"]*)/);
-          tag = matches && matches[1] || tag;
-          // tag the moniker
-          moniker += '/' + tag + '.js';
-        }
-        // source map hint
-        code += "\n//# sourceURL=" + moniker + "\n";
-        // evaluate the code
-        scope.currentScript = scriptElt;
-        eval.call(window, code);
-        scope.currentScript = null;
+    // acquire code to execute
+    var code = (scriptElt.__resource || scriptElt.textContent).trim();
+    if (code) {
+      // calculate source map hint
+      var moniker = scriptElt.__nodeUrl;
+      if (!moniker) {
+        moniker = scriptElt.ownerDocument.baseURI;
+        // there could be more than one script this url
+        var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
+        // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
+        // this sort of thing
+        var matches = code.match(/Polymer\(['"]([^'"]*)/);
+        tag = matches && matches[1] || tag;
+        // tag the moniker
+        moniker += '/' + tag + '.js';
       }
+      // source map hint
+      code += "\n//# sourceURL=" + moniker + "\n";
+      // evaluate the code
+      scope.currentScript = scriptElt;
+      eval.call(window, code);
+      scope.currentScript = null;
     }
-    this.markParsingComplete();
+    this.markParsingComplete(scriptElt);
   },
   nextToParse: function() {
     return !this.parsingElement && this.nextToParseInDoc(document);
   },
-  nextToParseInDoc: function(doc) {
-    var nodes = doc.querySelectorAll(this.selectors);
-    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
-      if (this.canParse(n)) {
-        return nodeIsImport(n) ? this.nextToParseInDoc(n.__resource) || n : n;
+  nextToParseInDoc: function(doc, link) {
+    var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));
+    for (var i=0, l=nodes.length, p=0, n; (i<l) && (n=nodes[i]); i++) {
+      if (!this.isParsed(n)) {
+        if (this.hasResource(n)) {
+          return nodeIsImport(n) ? this.nextToParseInDoc(n.import, n) : n;
+        } else {
+          return;
+        }
       }
     }
+    // all nodes have been parsed, ready to parse import, if any
+    return link;
   },
-  canParse: function(node) {
-    var parseable = !node.__importParsed;
-    return parseable && this.hasResource(node);
+  parseSelectorsForNode: function(node) {
+    var doc = node.ownerDocument || node;
+    return doc === mainDoc ? this.documentSelectors : this.importsSelectors;
+  },
+  isParsed: function(node) {
+    return node.__importParsed;
   },
   hasResource: function(node) {
-    return (!(nodeIsImport(node) || (node.localName === 'script')) ||
-        node.__resource);
+    if (nodeIsImport(node) && !node.import) {
+      return false;
+    }
+    if (node.localName === 'script' && node.src && !node.__resource) {
+      return false;
+    }
+    return true;
   }
 };
 
@@ -195,24 +208,7 @@ var path = {
 }
 
 function nodeIsImport(elt) {
-  return (elt.localName === 'link') && (elt.rel === 'import');
-}
-
-function isDocumentLink(elt) {
-  return elt.localName === 'link'
-      && elt.getAttribute('rel') === IMPORT_LINK_TYPE;
-}
-
-function needsMainDocumentContext(node) {
-  // nodes can be moved to the main document:
-  // if they are in a tree but not in the main document
-  return node.parentNode && !inMainDocument(node);
-}
-
-function inMainDocument(elt) {
-  return elt.ownerDocument === document ||
-    // TODO(sjmiles): ShadowDOMPolyfill intrusion
-    elt.ownerDocument.impl === document;
+  return (elt.localName === 'link') && (elt.rel === IMPORT_LINK_TYPE);
 }
 
 // exports

@@ -9,11 +9,11 @@
   // imports
   var path = scope.path;
   var xhr = scope.xhr;
+  var flags = scope.flags;
 
-  var Loader = function(onLoad, onError, onComplete) {
+  var Loader = function(onLoad, onComplete) {
     this.cache = {};
     this.onload = onLoad;
-    this.onerror = onError;
     this.oncomplete = onComplete;
     this.inflight = 0;
     this.pending = {};
@@ -57,8 +57,8 @@
         // don't need fetch
         return true;
       }
-      if (cache[url]) {
-        // complete load using cache data
+      var resource;
+      if (this.cache[url]) {
         this.onload(url, elt, this.cache[url]);
         // finished this transaction
         this.tail();
@@ -71,6 +71,7 @@
       return false;
     },
     fetch: function(url, elt) {
+      flags.load && console.log('fetch', url, elt);
       var receiveXhr = function(err, resource) {
         this.receive(url, elt, err, resource);
       }.bind(this);
@@ -90,16 +91,12 @@
       */
     },
     receive: function(url, elt, err, resource) {
-      if (!err) {
-        this.cache[url] = resource;
-      }
+      this.cache[url] = resource;
       var $p = this.pending[url];
       for (var i=0, l=$p.length, p; (i<l) && (p=$p[i]); i++) {
-        if (!err) {
+        //if (!err) {
           this.onload(url, p, resource);
-        } else {
-          this.onerror(url, p);
-        }
+        //}
         this.tail();
       }
       this.pending[url] = null;

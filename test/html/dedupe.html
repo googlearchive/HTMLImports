@@ -15,12 +15,16 @@
       var link = document.createElement('link');
       link.href = path.join('/') + '/imports/dedupe.html';
       link.rel = 'import';
+      link.addEventListener('load', function(e) {
+        console.log('dynamic link loaded', e.target);
+      })
       document.head.appendChild(link);
     </script>
   </head>
   <body>
     <script>
       addEventListener('HTMLImportsLoaded', function() {
+        console.log('ready');
         chai.assert.equal(dedupe, 1, 'import loaded');
         done();
       });
