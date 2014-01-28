@@ -32,7 +32,19 @@ HTMLImports.whenImportsReady(function() {
 });
 
 if (!HTMLImports.useNative) {
-  HTMLImports.observe(doc);
+  function bootstrap() {
+    HTMLImports.importer.bootDocument(doc);
+  }
+    
+  // TODO(sorvell): SD polyfill does *not* generate mutations for nodes added
+  // by the parser. For this reason, we must wait until the dom exists to 
+  // bootstrap.
+  if (document.readyState === 'complete' ||
+      (document.readyState === 'interactive' && !window.attachEvent)) {
+    bootstrap();
+  } else {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  }
 }
 
 })();

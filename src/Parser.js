@@ -137,7 +137,7 @@ var importParser = {
     this.markParsingComplete(scriptElt);
   },
   nextToParse: function() {
-    return !this.parsingElement && this.nextToParseInDoc(document);
+    return !this.parsingElement && this.nextToParseInDoc(mainDoc);
   },
   nextToParseInDoc: function(doc, link) {
     var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));

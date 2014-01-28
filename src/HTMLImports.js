@@ -72,7 +72,7 @@ if (!useNative) {
       // see https://code.google.com/p/chromium/issues/detail?id=249381.
       elt.__resource = resource;
       if (isDocumentLink(elt)) {
-        var doc = importer.documents[url];
+        var doc = this.documents[url];
         // if we've never seen a document at this url
         if (!doc) {
           // generate an HTMLDocument from data
@@ -80,15 +80,19 @@ if (!useNative) {
           doc.__importLink = elt;
           // TODO(sorvell): we cannot use MO to detect parsed nodes because
           // SD polyfill does not report these as mutations.
-          importer.loadSubtree(doc);
-          importer.observe(doc);
+          this.bootDocument(doc);
           // cache document
-          importer.documents[url] = doc;
+          this.documents[url] = doc;
         }
         // don't store import record until we're actually loaded
         // store document resource
         elt.import = doc;
       }
+      parser.parseNext();
+    },
+    bootDocument: function(doc) {
+      this.loadSubtree(doc);
+      this.observe(doc);
       parser.parseNext();
     },
     loadedAll: function() {
@@ -152,16 +156,13 @@ if (!useNative) {
   var importer = {};
 }
 
-var wrappedDoc = window.ShadowDOMPolyfill ? wrap(document) : document;
-
-
 // NOTE: We cannot polyfill document.currentScript because it's not possible
 // both to override and maintain the ability to capture the native value;
 // therefore we choose to expose _currentScript both when native imports
 // and the polyfill are in use.
-Object.defineProperty(wrappedDoc, '_currentScript', {
+Object.defineProperty(mainDoc, '_currentScript', {
   get: function() {
-    return HTMLImports.currentScript || wrappedDoc.currentScript;
+    return HTMLImports.currentScript || mainDoc.currentScript;
   },
   writeable: true,
   configurable: true
@@ -171,7 +172,7 @@ Object.defineProperty(wrappedDoc, '_currentScript', {
 // which may not be desireable; calls should resolve in the correct order,
 // however.
 function whenImportsReady(callback, doc) {
-  doc = doc || wrappedDoc;
+  doc = doc || mainDoc;
   // if document is loading, wait and try again
   var requiredState = HTMLImports.isIE ? 'complete' : 'interactive';
   var isReady = (doc.readyState === 'complete' ||
