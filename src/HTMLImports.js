@@ -10,6 +10,9 @@ var hasNative = ('import' in document.createElement('link'));
 var useNative = !scope.flags.imports && hasNative;
 
 var IMPORT_LINK_TYPE = 'import';
+// TODO(sorvell): SD polyfill intrusion
+var mainDoc = window.ShadowDOMPolyfill ? 
+    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 if (!useNative) {
   // imports
@@ -36,9 +39,6 @@ if (!useNative) {
 
   var importLoader;
   var STYLE_LINK_TYPE = 'stylesheet';
-  // TODO(sorvell): SD polyfill intrusion
-  var mainDoc = window.ShadowDOMPolyfill ? 
-    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
   var importer = {
     documents: {},
