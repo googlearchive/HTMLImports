@@ -183,7 +183,7 @@ function cloneStyle(style) {
 }
 
 var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
-var CSS_IMPORT_REGEXP = /(@import[\s]*)([^;]*)(;)/g;
+var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
 
 var path = {
   resolveUrlsInStyle: function(style) {

@@ -11,6 +11,7 @@
     <script>
       function test() {
         chai.assert.equal(document._currentScript, document.currentScript, '_currentScript reflects currentScript');
+        chai.assert.isTrue(window.remoteCurrentScriptExecuted);
         done();
       }
 
