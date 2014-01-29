@@ -11,6 +11,9 @@ var flags = scope.flags;
 var useNative = !flags.imports && hasNative;
 
 var IMPORT_LINK_TYPE = 'import';
+// TODO(sorvell): SD polyfill intrusion
+var mainDoc = window.ShadowDOMPolyfill ? 
+    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 if (!useNative) {
   // imports
@@ -36,9 +39,6 @@ if (!useNative) {
   // inline style sheets get path fixups when their containing import modifies paths
 
   var STYLE_LINK_TYPE = 'stylesheet';
-  // TODO(sorvell): SD polyfill intrusion
-  var mainDoc = window.ShadowDOMPolyfill ? 
-    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
   var importer = {
     documents: {},
