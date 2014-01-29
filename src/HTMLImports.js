@@ -170,26 +170,26 @@ if (!useNative) {
   // do nothing if using native imports
 }
 
-var wrappedDoc = window.ShadowDOMPolyfill ? wrap(document) : document;
-
-
 // NOTE: We cannot polyfill document.currentScript because it's not possible
 // both to override and maintain the ability to capture the native value;
 // therefore we choose to expose _currentScript both when native imports
 // and the polyfill are in use.
-Object.defineProperty(wrappedDoc, '_currentScript', {
+var currentScriptDescriptor = {
   get: function() {
-    return HTMLImports.currentScript || wrappedDoc.currentScript;
+    return HTMLImports.currentScript || document.currentScript;
   },
   writeable: true,
   configurable: true
-});
+}
+
+Object.defineProperty(document, '_currentScript', currentScriptDescriptor);
+Object.defineProperty(mainDoc, '_currentScript', currentScriptDescriptor);
 
 // TODO(sorvell): multiple calls will install multiple event listeners
 // which may not be desireable; calls should resolve in the correct order,
 // however.
 function whenImportsReady(callback, doc) {
-  doc = doc || wrappedDoc;
+  doc = doc || mainDoc;
   // if document is loading, wait and try again
   var requiredState = HTMLImports.isIE ? 'complete' : 'interactive';
   var isReady = (doc.readyState === 'complete' ||
