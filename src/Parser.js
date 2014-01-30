@@ -109,6 +109,32 @@ var importParser = {
     };
     elt.addEventListener('load', done);
     elt.addEventListener('error', done);
+
+    // NOTE: IE does not fire "load" event for styles that have already loaded
+    // This is in violation of the spec, so we try our hardest to work around it
+    if (isIe && elt.localName === 'style') {
+      var fakeLoad = false;
+      // If there's not @import in the textContent, assume it has loaded
+      if (elt.textContent.indexOf('@import') == -1) {
+        fakeLoad = true;
+      // if we have a sheet, we have been parsed
+      } else if (elt.sheet) {
+        fakeLoad = true;
+        var csr = elt.sheet.cssRules;
+        var len = csr ? csr.length : 0;
+        // search the rules for @import's
+        for (var i = 0, r; (i < len) && (r = csr[i]); i++) {
+          if (r.type === CSSRule.IMPORT_RULE) {
+            // if every @import has resolved, fake the load
+            fakeLoad = fakeLoad && Boolean(r.styleSheet);
+          }
+        }
+      }
+      // dispatch a fake load event and continue parsing
+      if (fakeLoad) {
+        elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
+      }
+    }
   },
   parseScript: function(scriptElt) {
     // acquire code to execute

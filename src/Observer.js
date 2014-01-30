@@ -12,7 +12,8 @@ var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 var matches = HTMLElement.prototype.matches || 
     HTMLElement.prototype.matchesSelector || 
     HTMLElement.prototype.webkitMatchesSelector ||
-    HTMLElement.prototype.mozMatchesSelector;
+    HTMLElement.prototype.mozMatchesSelector ||
+    HTMLElement.prototype.msMatchesSelector;
 
 var importer = scope.importer;
 
@@ -22,7 +23,7 @@ function handler(mutations) {
       addedNodes(m.addedNodes);
     }
   }
-};
+}
 
 function addedNodes(nodes) {
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
