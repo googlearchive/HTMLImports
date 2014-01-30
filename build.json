@@ -3,5 +3,6 @@
   "src/Loader.js",
   "src/HTMLImports.js",
   "src/Parser.js",
+  "src/Observer.js",
   "src/boot.js"
 ]
