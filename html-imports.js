@@ -9,6 +9,7 @@
 var thisFile = 'html-imports.js';
 var scopeName = 'HTMLImports';
 var modules = [
+  '../MutationObservers/mutation-observers.js',
   'src/scope.js',
   'src/Loader.js',
   'src/Parser.js',

@@ -13,7 +13,9 @@ module.exports = function(karma) {
       'HTMLImports/html-imports.js',
       {pattern: 'tools/**/*.js', included: false},
       {pattern: 'HTMLImports/src/*', included: false},
-      {pattern: 'HTMLImports/test/**/*', included: false}
+      {pattern: 'HTMLImports/test/**/*', included: false},
+      {pattern: 'MutationObservers/*.js', included: false},
+      {pattern: 'WeakMap/*.js', included: false}
     ],
   }));
 };

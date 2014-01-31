@@ -1,4 +1,5 @@
 [
+  "../MutationObservers/build.json",
   "src/scope.js",
   "src/Loader.js",
   "src/Parser.js",
