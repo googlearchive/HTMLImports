@@ -9,6 +9,10 @@
   "keywords": [
     "HTMLImports"
   ],
+  "dependencies": {
+    "MutationObservers": "Polymer/MutationObservers#master",
+    "tools": "Polymer/tools#master"
+  },
   "license": "BSD",
   "private": true,
   "ignore": [
