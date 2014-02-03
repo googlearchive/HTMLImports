@@ -13,6 +13,7 @@ var matches = HTMLElement.prototype.matches ||
     HTMLElement.prototype.matchesSelector || 
     HTMLElement.prototype.webkitMatchesSelector ||
     HTMLElement.prototype.mozMatchesSelector ||
+    HTMLElement.prototype.oMatchesSelector ||
     HTMLElement.prototype.msMatchesSelector;
 
 var importer = scope.importer;
