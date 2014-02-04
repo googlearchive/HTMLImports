@@ -7,42 +7,34 @@
 (function(scope) {
 
 var hasNative = ('import' in document.createElement('link'));
+var useNative = hasNative;
 var flags = scope.flags;
-var useNative = !flags.imports && hasNative;
-
 var IMPORT_LINK_TYPE = 'import';
+
 // TODO(sorvell): SD polyfill intrusion
 var mainDoc = window.ShadowDOMPolyfill ? 
     ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 if (!useNative) {
+
   // imports
   var xhr = scope.xhr;
   var Loader = scope.Loader;
   var parser = scope.parser;
+
   // importer
-  // highlander object represents a primary document (the argument to 'load')
-  // at the root of a tree of documents
+  // highlander object to manage loading of imports
 
   // for any document, importer:
-  // - loads any linked documents (with deduping), modifies paths and feeds them back into importer
+  // - loads any linked import documents (with deduping)
+  // for any import document, importer also:
   // - loads text of external script tags
-  // - loads text of external style tags inside of <element>, modifies paths
-
-  // when importer 'modifies paths' in a document, this includes
-  // - href/src/action in node attributes
-  // - paths in inline stylesheets
-  // - all content inside templates
-
-  // linked style sheets in an import have their own path fixed up when their containing import modifies paths
-  // linked style sheets in an <element> are loaded, and the content gets path fixups
-  // inline style sheets get path fixups when their containing import modifies paths
-
-  var STYLE_LINK_TYPE = 'stylesheet';
 
   var importer = {
     documents: {},
+    // nodes to load in the mian document
     documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+    // nodes to load in imports
     importsPreloadSelectors: [
         'link[rel=' + IMPORT_LINK_TYPE + ']',
         'script[src]:not([type])',
@@ -51,6 +43,7 @@ if (!useNative) {
     loadNode: function(node) {
       importLoader.addNode(node);
     },
+    // load all loadable elements within the parent element
     loadSubtree: function(parent) {
       var nodes = this.marshalNodes(parent);
       // add these nodes to loader's queue
@@ -60,6 +53,7 @@ if (!useNative) {
       // all preloadable nodes in inDocument
       return parent.querySelectorAll(this.loadSelectorsForNode(parent));
     },
+    // find the proper set of load selectors for a given node
     loadSelectorsForNode: function(node) {
       var doc = node.ownerDocument || node;
       return doc === mainDoc ? this.documentPreloadSelectors :
@@ -100,15 +94,12 @@ if (!useNative) {
     }
   };
 
+  // loader singleton
   var importLoader = new Loader(importer.loaded.bind(importer), 
       importer.loadedAll.bind(importer));
 
   function isDocumentLink(elt) {
     return isLinkRel(elt, IMPORT_LINK_TYPE);
-  }
-
-  function isStylesheetLink(elt) {
-    return isLinkRel(elt, STYLE_LINK_TYPE);
   }
 
   function isLinkRel(elt, rel) {
@@ -183,25 +174,44 @@ if (!document.baseURI) {
   Object.defineProperty(mainDoc, 'baseURI', baseURIDescriptor);
 }
 
-// TODO(sorvell): multiple calls will install multiple event listeners
-// which may not be desireable; calls should resolve in the correct order,
-// however.
+// call a callback when all HTMLImports in the document at call (or at least
+//  document ready) time have loaded.
+// 1. ensure the document is in a ready state (has dom), then 
+// 2. watch for loading of imports and call callback when done
 function whenImportsReady(callback, doc) {
   doc = doc || mainDoc;
   // if document is loading, wait and try again
-  var requiredState = HTMLImports.isIE ? 'complete' : 'interactive';
-  var isReady = (doc.readyState === 'complete' ||
-      doc.readyState === requiredState);
-  if (!isReady) {
-    var checkReady = function(e) {
-      if (doc.readyState === 'complete' || doc.readyState === requiredState) {
-        doc.removeEventListener('readystatechange', checkReady)
-        whenImportsReady(callback, doc);
+  whenDocumentReady(function() {
+    watchImportsLoad(callback, doc);
+  }, doc);
+}
+
+// call the callback when the document is in a ready state (has dom)
+var requiredReadyState = HTMLImports.isIE ? 'complete' : 'interactive';
+var READY_EVENT = 'readystatechange';
+function isDocumentReady(doc) {
+  return (doc.readyState === 'complete' ||
+      doc.readyState === requiredReadyState);
+}
+
+// call <callback> when we ensure the document is in a ready state
+function whenDocumentReady(callback, doc) {
+  if (!isDocumentReady(doc)) {
+    var checkReady = function() {
+      if (doc.readyState === 'complete' || 
+          doc.readyState === requiredReadyState) {
+        doc.removeEventListener(READY_EVENT, checkReady);
+        whenDocumentReady(callback, doc);
       }
     }
-    doc.addEventListener('readystatechange', checkReady)
-    return;
+    doc.addEventListener(READY_EVENT, checkReady);
+  } else if (callback) {
+    callback();
   }
+}
+
+// call <callback> when we ensure all imports have loaded
+function watchImportsLoad(callback, doc) {
   var imports = doc.querySelectorAll('link[rel=import]');
   var loaded = 0, l = imports.length;
   function checkDone(d) { 
@@ -210,8 +220,7 @@ function whenImportsReady(callback, doc) {
       requestAnimationFrame(callback);
     }
   }
-  // called in context of import
-  function loadedImport() {
+  function loadedImport(e) {
     loaded++;
     checkDone();
   }

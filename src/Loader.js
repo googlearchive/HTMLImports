@@ -11,6 +11,10 @@
   var xhr = scope.xhr;
   var flags = scope.flags;
 
+  // TODO(sorvell): this loader supports a dynamic list of urls
+  // and an oncomplete callback that is called when the loader is done.
+  // The polyfill currently does *not* need this dynamism or the onComplete
+  // concept. Because of this, the loader could be simplified quite a bit.
   var Loader = function(onLoad, onComplete) {
     this.cache = {};
     this.onload = onLoad;

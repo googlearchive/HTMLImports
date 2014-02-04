@@ -13,10 +13,18 @@ var isIe = /Trident/.test(navigator.userAgent);
 var mainDoc = window.ShadowDOMPolyfill ? 
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
+// importParser
+// highlander object to manage parsing of imports
+// parses import related elements
+// and ensures proper parse order
+// parse order is enforced by crawling the tree and monitoring which elements
+// have been parsed; async parsing is also supported.
 
 // highlander object for parsing a document tree
 var importParser = {
+  // parse selectors for main document elements
   documentSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+  // parse selectors for import document elements
   importsSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
     'link[rel=stylesheet]',
@@ -29,9 +37,9 @@ var importParser = {
     script: 'parseScript',
     style: 'parseStyle'
   },
+  // try to parse the next import in the tree
   parseNext: function() {
     var next = this.nextToParse();
-    //console.log('parseNext', next);
     if (next) {
       this.parse(next);
     }
@@ -47,6 +55,9 @@ var importParser = {
       fn.call(this, elt);
     }
   },
+  // only 1 element may be parsed at a time; parsing is async so, each
+  // parsing implementation must inform the system that parsing is complete
+  // via markParsingComplete.
   markParsing: function(elt) {
     flags.parse && console.log('parsing', elt);
     this.parsingElement = elt;
@@ -62,7 +73,12 @@ var importParser = {
   },
   parseImport: function(elt) {
     elt.import.__importParsed = true;
-    // TODO(sorvell): onerror
+    // TODO(sorvell): consider if there's a better way to do this;
+    // expose an imports parsing hook; this is needed, for example, by the
+    // CustomElements polyfill.
+    if (HTMLImports.__importsParsingHook) {
+      HTMLImports.__importsParsingHook(elt);
+    }
     // fire load event
     if (elt.__resource) {
       elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));    
@@ -102,6 +118,7 @@ var importParser = {
     this.trackElement(elt);
     document.head.appendChild(elt);
   },
+  // tracks when a loadable element has loaded
   trackElement: function(elt) {
     var self = this;
     var done = function() {
@@ -162,6 +179,7 @@ var importParser = {
     }
     this.markParsingComplete(scriptElt);
   },
+  // determine the next element in the tree which should be parsed
   nextToParse: function() {
     return !this.parsingElement && this.nextToParseInDoc(mainDoc);
   },
@@ -179,6 +197,7 @@ var importParser = {
     // all nodes have been parsed, ready to parse import, if any
     return link;
   },
+  // return the set of parse selectors relevant for this node.
   parseSelectorsForNode: function(node) {
     var doc = node.ownerDocument || node;
     return doc === mainDoc ? this.documentSelectors : this.importsSelectors;
@@ -197,7 +216,11 @@ var importParser = {
   }
 };
 
+function nodeIsImport(elt) {
+  return (elt.localName === 'link') && (elt.rel === IMPORT_LINK_TYPE);
+}
 
+// style/stylesheet handling
 
 // clone style with proper path resolution for main document
 // NOTE: styles are the only elements that require direct path fixup.
@@ -208,6 +231,8 @@ function cloneStyle(style) {
   return clone;
 }
 
+// path fixup: style elements in imports must be made relative to the main 
+// document. We fixup url's in url() and @import.
 var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
 
@@ -231,10 +256,6 @@ var path = {
       return pre + '\'' + urlPath + '\'' + post;
     });    
   }
-}
-
-function nodeIsImport(elt) {
-  return (elt.localName === 'link') && (elt.rel === IMPORT_LINK_TYPE);
 }
 
 // exports
