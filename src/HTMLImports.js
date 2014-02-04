@@ -171,14 +171,16 @@ Object.defineProperty(document, '_currentScript', currentScriptDescriptor);
 Object.defineProperty(mainDoc, '_currentScript', currentScriptDescriptor);
 
 // Polyfill document.baseURI for browsers without it.
-// ShadowDOM Polyfill wrapper should handle this automatically.
 if (!document.baseURI) {
-  Object.defineProperty(document, 'baseURI', {
+  var baseURIDescriptor = {
     get: function() {
       return window.location.href;
     },
     configurable: true
-  });
+  };
+
+  Object.defineProperty(document, 'baseURI', baseURIDescriptor);
+  Object.defineProperty(mainDoc, 'baseURI', baseURIDescriptor);
 }
 
 // TODO(sorvell): multiple calls will install multiple event listeners
