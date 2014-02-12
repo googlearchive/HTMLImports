@@ -125,6 +125,11 @@ if (!useNative) {
     if (!doc.baseURI) {
       doc.baseURI = url;
     }
+    // ensure UTF-8 charset
+    var meta = doc.createElement('meta');
+    meta.setAttribute('charset', 'utf-8');
+
+    doc.head.appendChild(meta);
     doc.head.appendChild(base);
     // install HTML last as it may trigger CustomElement upgrades
     // TODO(sjmiles): problem wrt to template boostrapping below,
