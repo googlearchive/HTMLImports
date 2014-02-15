@@ -13,4 +13,5 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
   htmlTest('html/dynamic.html');
+  htmlTest('html/csp.html');
 });

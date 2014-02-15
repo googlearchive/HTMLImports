@@ -119,9 +119,12 @@ var importParser = {
     document.head.appendChild(elt);
   },
   // tracks when a loadable element has loaded
-  trackElement: function(elt) {
+  trackElement: function(elt, callback) {
     var self = this;
-    var done = function() {
+    var done = function(e) {
+      if (callback) {
+        callback(e);
+      }
       self.markParsingComplete(elt);
     };
     elt.addEventListener('load', done);
@@ -153,31 +156,23 @@ var importParser = {
       }
     }
   },
+  // NOTE: execute scripts by injecting them and watching for the load/error
+  // event. Inline scripts are handled via dataURL's because browsers tend to
+  // provide correct parsing errors in this case. If this has any compatibility
+  // issues, we can switch to injecting the inline script with textContent.
+  // Scripts with dataURL's do not appear to generate load events and therefore
+  // we assume they execute synchronously.
   parseScript: function(scriptElt) {
-    // acquire code to execute
-    var code = (scriptElt.__resource || scriptElt.textContent).trim();
-    if (code) {
-      // calculate source map hint
-      var moniker = scriptElt.__nodeUrl;
-      if (!moniker) {
-        moniker = scriptElt.ownerDocument.baseURI;
-        // there could be more than one script this url
-        var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
-        // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
-        // this sort of thing
-        var matches = code.match(/Polymer\(['"]([^'"]*)/);
-        tag = matches && matches[1] || tag;
-        // tag the moniker
-        moniker += '/' + tag + '.js';
-      }
-      // source map hint
-      code += "\n//# sourceURL=" + moniker + "\n";
-      // evaluate the code
-      scope.currentScript = scriptElt;
-      eval.call(window, code);
-      scope.currentScript = null;
-    }
-    this.markParsingComplete(scriptElt);
+    var script = document.createElement('script');
+    script.__importElement = scriptElt;
+    script.src = scriptElt.src ? scriptElt.src : 
+        generateScriptDataUrl(scriptElt);
+    scope.currentScript = scriptElt;
+    this.trackElement(script, function(e) {
+      script.parentNode.removeChild(script);
+      scope.currentScript = null;  
+    });
+    document.head.appendChild(script);
   },
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
@@ -209,15 +204,38 @@ var importParser = {
     if (nodeIsImport(node) && !node.import) {
       return false;
     }
-    if (node.localName === 'script' && node.src && !node.__resource) {
-      return false;
-    }
     return true;
   }
 };
 
 function nodeIsImport(elt) {
   return (elt.localName === 'link') && (elt.rel === IMPORT_LINK_TYPE);
+}
+
+function generateScriptDataUrl(script) {
+  var scriptContent = generateScriptContent(script);
+  return 'data:text/javascript;base64,' + btoa(scriptContent);
+}
+
+function generateScriptContent(script) {
+  return script.textContent + generateSourceMapHint(script);
+}
+
+// calculate source map hint
+function generateSourceMapHint(script) {
+  var moniker = script.__nodeUrl;
+  if (!moniker) {
+    moniker = script.ownerDocument.baseURI;
+    // there could be more than one script this url
+    var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
+    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
+    // this sort of thing
+    var matches = script.textContent.match(/Polymer\(['"]([^'"]*)/);
+    tag = matches && matches[1] || tag;
+    // tag the moniker
+    moniker += '/' + tag + '.js';
+  }
+  return '\n//# sourceURL=' + moniker + '\n';
 }
 
 // style/stylesheet handling

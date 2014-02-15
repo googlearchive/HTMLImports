@@ -27,8 +27,6 @@ if (!useNative) {
 
   // for any document, importer:
   // - loads any linked import documents (with deduping)
-  // for any import document, importer also:
-  // - loads text of external script tags
 
   var importer = {
     documents: {},
@@ -36,9 +34,7 @@ if (!useNative) {
     documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
     // nodes to load in imports
     importsPreloadSelectors: [
-        'link[rel=' + IMPORT_LINK_TYPE + ']',
-        'script[src]:not([type])',
-        'script[src][type="text/javascript"]'
+      'link[rel=' + IMPORT_LINK_TYPE + ']'
     ].join(','),
     loadNode: function(node) {
       importLoader.addNode(node);
