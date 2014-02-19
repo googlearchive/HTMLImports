@@ -95,12 +95,12 @@
       */
     },
     receive: function(url, elt, err, resource) {
+      // work around 404s with content
+      resource = err ? '' : resource;
       this.cache[url] = resource;
       var $p = this.pending[url];
       for (var i=0, l=$p.length, p; (i<l) && (p=$p[i]); i++) {
-        //if (!err) {
-          this.onload(url, p, resource);
-        //}
+        this.onload(url, p, resource);
         this.tail();
       }
       this.pending[url] = null;
