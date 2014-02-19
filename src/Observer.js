@@ -9,8 +9,8 @@ license that can be found in the LICENSE file.
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 
-var matches = HTMLElement.prototype.matches || 
-    HTMLElement.prototype.matchesSelector || 
+var matches = HTMLElement.prototype.matches ||
+    HTMLElement.prototype.matchesSelector ||
     HTMLElement.prototype.webkitMatchesSelector ||
     HTMLElement.prototype.mozMatchesSelector ||
     HTMLElement.prototype.oMatchesSelector ||
@@ -18,6 +18,7 @@ var matches = HTMLElement.prototype.matches ||
 
 var importer = scope.importer;
 
+// we track mutations for addedNodes, looking for imports
 function handler(mutations) {
   for (var i=0, l=mutations.length, m; (i<l) && (m=mutations[i]); i++) {
     if (m.type === 'childList' && m.addedNodes.length) {
@@ -26,6 +27,7 @@ function handler(mutations) {
   }
 }
 
+// find loadable elements and add them to the importer
 function addedNodes(nodes) {
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
     if (shouldLoadNode(n)) {
@@ -42,8 +44,16 @@ function shouldLoadNode(node) {
       importer.loadSelectorsForNode(node));
 }
 
+// x-plat matches
+var matches = HTMLElement.prototype.matches ||
+    HTMLElement.prototype.matchesSelector ||
+    HTMLElement.prototype.webkitMatchesSelector ||
+    HTMLElement.prototype.mozMatchesSelector ||
+    HTMLElement.prototype.msMatchesSelector;
+
 var observer = new MutationObserver(handler);
 
+// observe the given root for loadable elements
 function observe(root) {
   observer.observe(root, {childList: true, subtree: true});
 }

@@ -42,7 +42,8 @@
       var url = elt.src || elt.href;
       // opera doesn't have baseURI and it make url relative to root document
       if (!elt.baseURI) {
-        var baseURI = elt.ownerDocument._URL.match(/.+\//gi);
+        var baseURI = elt.ownerDocument._URL.match(/.+\//gi), baseURI = baseURI && baseURI[0] || '';
+        baseURI = baseURI.replace(window.location.protocol + '//' + window.location.host, '');
         elt.baseURI = baseURI;
         // don't use the element property, because it concatenet with baseURI
         url = elt.getAttribute('src') || elt.getAttribute('href');
@@ -51,7 +52,7 @@
           url = baseURI += url;
         }
       }
-      
+
       // ensure we have a standard url that can be used
       // reliably for deduping.
       // TODO(sjmiles): ad-hoc
