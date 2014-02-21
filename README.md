@@ -32,12 +32,22 @@ The HTML Imports polyfill begins processing link tags when the `DOMContentLoaded
 Example:
 
     <script>
-    window.addEventListener('HTMLImportsLoaded', function() {
+    window.addEventListener('HTMLImportsLoaded', function(e) {
       // all imports loaded
     });
     </script>
 
 The polyfill loads linked stylesheets, external scripts, and nested HTML imports, but does not parse any data in the loaded resources. For parsing imports, combine HTML Imports with  [Custom Elements](https://github.com/Polymer/CustomElements). As long as the HTML Imports is loaded first, the Custom Elements polyfill will detect it, and process all imports when `HTMLImportsLoaded` event fires.
+
+#### The WebComponentsReady event
+
+Under native imports, `<script>` tags in the main document block the loading of imports. This is to insure the imports have loaded and any registered elements in them have been upgrade. This native behavior is difficult to polyfill so we {{site.project_title}} doesn't try. Instead the `WebComponentsReady` event is a stand in for this behavior:
+
+    <script>
+      window.addEventListener('WebComponentsReady', function(e) {
+        // imports are loaded and elements have been registered
+      });
+    </script>
 
 #### Other notes
 

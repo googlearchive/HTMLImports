@@ -8,14 +8,6 @@ license that can be found in the LICENSE file.
 
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
-
-var matches = HTMLElement.prototype.matches ||
-    HTMLElement.prototype.matchesSelector ||
-    HTMLElement.prototype.webkitMatchesSelector ||
-    HTMLElement.prototype.mozMatchesSelector ||
-    HTMLElement.prototype.oMatchesSelector ||
-    HTMLElement.prototype.msMatchesSelector;
-
 var importer = scope.importer;
 
 // we track mutations for addedNodes, looking for imports
@@ -45,10 +37,11 @@ function shouldLoadNode(node) {
 }
 
 // x-plat matches
-var matches = HTMLElement.prototype.matches ||
-    HTMLElement.prototype.matchesSelector ||
+var matches = HTMLElement.prototype.matches || 
+    HTMLElement.prototype.matchesSelector || 
     HTMLElement.prototype.webkitMatchesSelector ||
     HTMLElement.prototype.mozMatchesSelector ||
+    HTMLElement.prototype.oMatchesSelector ||
     HTMLElement.prototype.msMatchesSelector;
 
 var observer = new MutationObserver(handler);

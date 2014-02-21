@@ -1,0 +1,1 @@
+window.externalScriptParsed1 = new Date().getTime();
