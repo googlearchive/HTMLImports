@@ -12,7 +12,7 @@ var flags = scope.flags;
 var IMPORT_LINK_TYPE = 'import';
 
 // TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
+var mainDoc = window.ShadowDOMPolyfill ?
     ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 if (!useNative) {
@@ -68,6 +68,7 @@ if (!useNative) {
           // generate an HTMLDocument from data
           doc = makeDocument(resource, url);
           doc.__importLink = elt;
+          doc._baseURI = elt._baseURI;
           // TODO(sorvell): we cannot use MO to detect parsed nodes because
           // SD polyfill does not report these as mutations.
           this.bootDocument(doc);
@@ -91,7 +92,7 @@ if (!useNative) {
   };
 
   // loader singleton
-  var importLoader = new Loader(importer.loaded.bind(importer), 
+  var importLoader = new Loader(importer.loaded.bind(importer),
       importer.loadedAll.bind(importer));
 
   function isDocumentLink(elt) {
@@ -177,7 +178,7 @@ if (!document.baseURI) {
 
 // call a callback when all HTMLImports in the document at call (or at least
 //  document ready) time have loaded.
-// 1. ensure the document is in a ready state (has dom), then 
+// 1. ensure the document is in a ready state (has dom), then
 // 2. watch for loading of imports and call callback when done
 function whenImportsReady(callback, doc) {
   doc = doc || mainDoc;
@@ -199,7 +200,7 @@ function isDocumentReady(doc) {
 function whenDocumentReady(callback, doc) {
   if (!isDocumentReady(doc)) {
     var checkReady = function() {
-      if (doc.readyState === 'complete' || 
+      if (doc.readyState === 'complete' ||
           doc.readyState === requiredReadyState) {
         doc.removeEventListener(READY_EVENT, checkReady);
         whenDocumentReady(callback, doc);
@@ -215,7 +216,7 @@ function whenDocumentReady(callback, doc) {
 function watchImportsLoad(callback, doc) {
   var imports = doc.querySelectorAll('link[rel=import]');
   var loaded = 0, l = imports.length;
-  function checkDone(d) { 
+  function checkDone(d) {
     if (loaded == l) {
       // go async to ensure parser isn't stuck on a script tag
       requestAnimationFrame(callback);

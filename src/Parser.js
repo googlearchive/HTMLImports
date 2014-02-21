@@ -10,7 +10,7 @@ var IMPORT_LINK_TYPE = 'import';
 var flags = scope.flags;
 var isIe = /Trident/.test(navigator.userAgent);
 // TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
+var mainDoc = window.ShadowDOMPolyfill ?
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 // importParser
@@ -81,7 +81,7 @@ var importParser = {
     }
     // fire load event
     if (elt.__resource) {
-      elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));    
+      elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
     } else {
       elt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
     }
@@ -165,12 +165,15 @@ var importParser = {
   parseScript: function(scriptElt) {
     var script = document.createElement('script');
     script.__importElement = scriptElt;
-    script.src = scriptElt.src ? scriptElt.src : 
+    if (!scriptElt.baseURI && scriptElt.src) {
+      scriptElt.src = scriptElt.ownerDocument._baseURI + scriptElt.getAttribute('src');
+    }
+    script.src = scriptElt.src ? scriptElt.src :
         generateScriptDataUrl(scriptElt);
     scope.currentScript = scriptElt;
     this.trackElement(script, function(e) {
       script.parentNode.removeChild(script);
-      scope.currentScript = null;  
+      scope.currentScript = null;
     });
     document.head.appendChild(script);
   },
@@ -228,7 +231,7 @@ function generateSourceMapHint(script) {
     moniker = script.ownerDocument.baseURI;
     // there could be more than one script this url
     var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
-    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
+    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow
     // this sort of thing
     var matches = script.textContent.match(/Polymer\(['"]([^'"]*)/);
     tag = matches && matches[1] || tag;
@@ -249,7 +252,7 @@ function cloneStyle(style) {
   return clone;
 }
 
-// path fixup: style elements in imports must be made relative to the main 
+// path fixup: style elements in imports must be made relative to the main
 // document. We fixup url's in url() and @import.
 var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
@@ -259,7 +262,7 @@ var path = {
     var doc = style.ownerDocument;
     var resolver = doc.createElement('a');
     style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
-    return style;  
+    return style;
   },
   resolveUrlsInCssText: function(cssText, urlObj) {
     var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
@@ -272,7 +275,7 @@ var path = {
       urlObj.href = urlPath;
       urlPath = urlObj.href;
       return pre + '\'' + urlPath + '\'' + post;
-    });    
+    });
   }
 }
 
