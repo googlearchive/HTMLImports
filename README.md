@@ -55,4 +55,4 @@ Under native imports, `<script>` tags in the main document block the loading of 
 
 ## Tools & Testing
 
-For running tests or building minified files, consult the [tooling information](http://polymer-project.org/tooling-strategy.html).
+For running tests or building minified files, consult the [tooling information](http://polymer-project.org/resources/tooling-strategy.html).
