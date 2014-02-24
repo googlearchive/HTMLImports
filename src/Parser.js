@@ -52,7 +52,18 @@ var importParser = {
     var fn = this[this.map[elt.localName]];
     if (fn) {
       this.markParsing(elt);
+      // Before mark to parse, fix the baseURI to find correct file place on server (Opera 12)
+      this.baseURIfix(elt);
       fn.call(this, elt);
+    }
+  },
+  baseURIfix: function (elt) {
+    if (!elt.ownerDocument.baseURI && elt.ownerDocument._baseURI) {
+      ['src', 'href'].forEach(function (attr) {
+        if (elt.getAttribute(attr) !== null && elt.getAttribute(attr).indexOf('://') === -1) {
+          elt.setAttribute(attr, elt.ownerDocument._baseURI + elt.getAttribute(attr));
+        }
+      });
     }
   },
   // only 1 element may be parsed at a time; parsing is async so, each
@@ -165,9 +176,6 @@ var importParser = {
   parseScript: function(scriptElt) {
     var script = document.createElement('script');
     script.__importElement = scriptElt;
-    if (!scriptElt.baseURI && scriptElt.src) {
-      scriptElt.src = scriptElt.ownerDocument._baseURI + scriptElt.getAttribute('src');
-    }
     script.src = scriptElt.src ? scriptElt.src :
         generateScriptDataUrl(scriptElt);
     scope.currentScript = scriptElt;
