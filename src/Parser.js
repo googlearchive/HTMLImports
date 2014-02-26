@@ -224,8 +224,15 @@ function nodeIsImport(elt) {
 }
 
 function generateScriptDataUrl(script) {
-  var scriptContent = generateScriptContent(script);
-  return 'data:text/javascript;base64,' + btoa(scriptContent);
+  var scriptContent = generateScriptContent(script), b64;
+  try {
+    b64 = btoa(scriptContent);
+  } catch(e) {
+    b64 = btoa(unescape(encodeURIComponent(scriptContent)));
+    console.warn('Script contained non-latin characters that were forced ' +
+      'to latin. Some characters may be wrong.', script);
+  }
+  return 'data:text/javascript;base64,' + b64;
 }
 
 function generateScriptContent(script) {
