@@ -76,23 +76,38 @@
     },
     fetch: function(url, elt) {
       flags.load && console.log('fetch', url, elt);
-      var receiveXhr = function(err, resource) {
-        this.receive(url, elt, err, resource);
-      }.bind(this);
-      xhr.load(url, receiveXhr);
-      // TODO(sorvell): blocked on
-      // https://code.google.com/p/chromium/issues/detail?id=257221
-      // xhr'ing for a document makes scripts in imports runnable; otherwise
-      // they are not; however, it requires that we have doctype=html in
-      // the import which is unacceptable. This is only needed on Chrome
-      // to avoid the bug above.
-      /*
-      if (isDocumentLink(elt)) {
-        xhr.loadDocument(url, receiveXhr);
+      if (url.match(/^data:/)) {
+        // Handle Data URI Scheme
+        var pieces = url.split(',');
+        var header = pieces[0];
+        var body = pieces[1];
+        if(header.indexOf(';base64') > -1) {
+          body = atob(body);
+        } else {
+          body = decodeURIComponent(body);
+        }
+        setTimeout(function() {
+            this.receive(url, elt, null, body);
+        }.bind(this), 0);
       } else {
+        var receiveXhr = function(err, resource) {
+          this.receive(url, elt, err, resource);
+        }.bind(this);
         xhr.load(url, receiveXhr);
+        // TODO(sorvell): blocked on)
+        // https://code.google.com/p/chromium/issues/detail?id=257221
+        // xhr'ing for a document makes scripts in imports runnable; otherwise
+        // they are not; however, it requires that we have doctype=html in
+        // the import which is unacceptable. This is only needed on Chrome
+        // to avoid the bug above.
+        /*
+        if (isDocumentLink(elt)) {
+          xhr.loadDocument(url, receiveXhr);
+        } else {
+          xhr.load(url, receiveXhr);
+        }
+        */
       }
-      */
     },
     receive: function(url, elt, err, resource) {
       this.cache[url] = resource;

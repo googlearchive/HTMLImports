@@ -6,6 +6,13 @@
     <script src="../../../tools/test/chai/chai.js"></script>
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/import-1.html">
+
+    <!-- the data URI is an html file containing only one import that itself
+         is a data URI of an HTML file containing only a comment. -->
+    <link rel="import" href="data:text/html;charset=utf-8,%3Clink%20rel%3D%22import%22%20href%3D%22data%3Atext%2Fhtml%3Bcharset%3Dutf-8%2C%253C%2521--%2520empty%2520import%2520--%253E%22%3E">
+    <!-- same content as above, but using base64 encoding -->
+    <link rel="import" href="data:text/plain;charset=utf-8;base64,PGxpbmsgcmVsPSJpbXBvcnQiIGhyZWY9ImRhdGE6dGV4dC9wbGFpbjtjaGFyc2V0PXV0Zi04O2Jhc2U2NCxQQ0V0TFNCcWRYTjBJR0VnWTI5dGJXVnVkQ0F0TFQ0PSIgLz4=">
+
   </head>
   <body>
     <script>
@@ -15,10 +22,10 @@
       addEventListener('HTMLImportsLoaded', function() {
         clearTimeout(timeout);
         if (!HTMLImports.useNative) {
-          chai.assert.equal(5, Object.keys(HTMLImports.importLoader.cache).length,
-            'must cache exactly four resources');
-          chai.assert.equal(5, Object.keys(HTMLImports.importer.documents).length,
-            'must cache exactly four documents');
+          chai.assert.equal(9, Object.keys(HTMLImports.importLoader.cache).length,
+            'must cache exactly nine resources');
+          chai.assert.equal(9, Object.keys(HTMLImports.importer.documents).length,
+            'must cache exactly nine documents');
 
           Object.keys(HTMLImports.importer.documents).forEach(function(key) {
             var doc = HTMLImports.importer.documents[key];
