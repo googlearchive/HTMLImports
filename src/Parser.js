@@ -53,16 +53,18 @@ var importParser = {
     var fn = this[this.map[elt.localName]];
     if (fn) {
       this.markParsing(elt);
-      // Before mark to parse, fix the baseURI to find correct file place on server (Opera 12)
+      //FIXME: Workaraund to baseURI failure on Opera, need to fix in ShadowDOM wrappers
       this.baseURIfix(elt);
       fn.call(this, elt);
     }
   },
   baseURIfix: function (elt) {
-    if (!elt.ownerDocument.baseURI && elt.ownerDocument._baseURI) {
+    if (!elt.ownerDocument || !elt.ownerDocument.impl)
+      return;
+    if (!elt.ownerDocument.impl.baseURI && elt.ownerDocument.impl._baseURI) {
       ['src', 'href'].forEach(function (attr) {
         if (elt.getAttribute(attr) !== null && elt.getAttribute(attr).indexOf('://') === -1) {
-          elt.setAttribute(attr, elt.ownerDocument._baseURI + elt.getAttribute(attr));
+          elt.setAttribute(attr, elt.ownerDocument.impl._baseURI + elt.getAttribute(attr));
         }
       });
     }
