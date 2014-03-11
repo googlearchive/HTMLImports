@@ -10,6 +10,7 @@
   var path = scope.path;
   var xhr = scope.xhr;
   var flags = scope.flags;
+  var isOpera = !!window.opera;
 
   // TODO(sorvell): this loader supports a dynamic list of urls
   // and an oncomplete callback that is called when the loader is done.
@@ -45,9 +46,27 @@
     require: function(elt) {
       var url = elt.src || elt.href;
       // opera doesn't have baseURI and it make url relative to root document
-      var baseURI = url.match(/.+\//gi), baseURI = baseURI && baseURI[0] || '';
-      baseURI = baseURI.replace(window.location.protocol + '//' + window.location.host, '');
-      elt._baseURI = baseURI;
+      if (isOpera) {
+        var locationURI = location.href.slice(0, location.href.lastIndexOf('/') + 1);
+        var serverURI = window.location.protocol + '//' + window.location.host;
+        var isRelative;
+        var baseURI = '';
+        if (elt.ownerDocument.impl._URL) {
+          baseURI = elt.ownerDocument.impl._URL.slice(0, elt.ownerDocument.impl._URL.lastIndexOf('/') + 1);
+        } else {
+          baseURI = locationURI;
+        }
+        ['src', 'href'].forEach(function (attr) {
+          if (elt.getAttribute(attr)) {
+            isRelative = elt.getAttribute(attr)[0] !== '/' && elt[attr].indexOf(serverURI) === 0;
+            if (isRelative) {
+              url = baseURI + elt.getAttribute(attr);
+              baseURI = url.slice(0, url.lastIndexOf('/') + 1);
+            }
+          }
+        });
+        elt._baseURI = isRelative ? baseURI : locationURI;
+      }
 
       // ensure we have a standard url that can be used
       // reliably for deduping.
