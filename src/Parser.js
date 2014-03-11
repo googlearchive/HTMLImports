@@ -9,7 +9,7 @@
 var IMPORT_LINK_TYPE = 'import';
 var flags = scope.flags;
 var isIe = /Trident/.test(navigator.userAgent);
-var isOpera = !!window.opera;
+var isOpera = /Opera/.test(navigator.userAgent);
 // TODO(sorvell): SD polyfill intrusion
 var mainDoc = window.ShadowDOMPolyfill ?
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;

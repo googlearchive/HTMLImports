@@ -10,7 +10,7 @@
   var path = scope.path;
   var xhr = scope.xhr;
   var flags = scope.flags;
-  var isOpera = !!window.opera;
+  var isOpera = /Opera/.test(navigator.userAgent);
 
   // TODO(sorvell): this loader supports a dynamic list of urls
   // and an oncomplete callback that is called when the loader is done.
