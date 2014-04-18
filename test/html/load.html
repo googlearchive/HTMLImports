@@ -30,7 +30,7 @@
     documents. This doesn't really make sense, check spec. 
     See: https://code.google.com/p/chromium/issues/detail?id=336609
     -->
-    <link rel="import" href="imports/404.html" onload="importError(event)" onerror="importError(event)">
+    <link rel="import" id="404" href="imports/404.html" onload="importError(event)" onerror="importError(event)">
   </head>
   <body>
     <div id="test1" class="red">Test</div>
@@ -43,6 +43,8 @@
         chai.assert.equal(test1, 'rgb(255, 0, 0)');
         var test2 = getComputedStyle(document.querySelector('#test2')).backgroundColor;
         chai.assert.equal(test2, 'rgb(0, 0, 255)');
+        var errord = document.getElementById('404');
+        chai.assert.equal(errord.import.body.textContent, '');
         done();
       });
     </script>
