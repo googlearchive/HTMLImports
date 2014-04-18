@@ -9,8 +9,9 @@
 var IMPORT_LINK_TYPE = 'import';
 var flags = scope.flags;
 var isIe = /Trident/.test(navigator.userAgent);
+var isOpera = /Opera/.test(navigator.userAgent);
 // TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
+var mainDoc = window.ShadowDOMPolyfill ?
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
 
 // importParser
@@ -52,7 +53,20 @@ var importParser = {
     var fn = this[this.map[elt.localName]];
     if (fn) {
       this.markParsing(elt);
+      //FIXME: Workaraund to baseURI failure on Opera, need to fix in ShadowDOM wrappers
+      this.baseURIfix(elt);
       fn.call(this, elt);
+    }
+  },
+  baseURIfix: function (elt) {
+    if (!elt.ownerDocument || !elt.ownerDocument.impl)
+      return;
+    if (!elt.ownerDocument.impl.baseURI && elt.ownerDocument.impl._baseURI) {
+      ['src', 'href'].forEach(function (attr) {
+        if (elt.getAttribute(attr) !== null && elt.getAttribute(attr).indexOf('://') === -1) {
+          elt.setAttribute(attr, elt.ownerDocument.impl._baseURI + elt.getAttribute(attr));
+        }
+      });
     }
   },
   // only 1 element may be parsed at a time; parsing is async so, each
@@ -81,7 +95,7 @@ var importParser = {
     }
     // fire load event
     if (elt.__resource) {
-      elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));    
+      elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));
     } else {
       elt.dispatchEvent(new CustomEvent('error', {bubbles: false}));
     }
@@ -132,7 +146,7 @@ var importParser = {
 
     // NOTE: IE does not fire "load" event for styles that have already loaded
     // This is in violation of the spec, so we try our hardest to work around it
-    if (isIe && elt.localName === 'style') {
+    if ((isOpera || isIe) && elt.localName === 'style') {
       var fakeLoad = false;
       // If there's not @import in the textContent, assume it has loaded
       if (elt.textContent.indexOf('@import') == -1) {
@@ -165,12 +179,12 @@ var importParser = {
   parseScript: function(scriptElt) {
     var script = document.createElement('script');
     script.__importElement = scriptElt;
-    script.src = scriptElt.src ? scriptElt.src : 
+    script.src = scriptElt.src ? scriptElt.src :
         generateScriptDataUrl(scriptElt);
     scope.currentScript = scriptElt;
     this.trackElement(script, function(e) {
       script.parentNode.removeChild(script);
-      scope.currentScript = null;  
+      scope.currentScript = null;
     });
     document.head.appendChild(script);
   },
@@ -235,7 +249,7 @@ function generateSourceMapHint(script) {
     moniker = script.ownerDocument.baseURI;
     // there could be more than one script this url
     var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
-    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
+    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow
     // this sort of thing
     var matches = script.textContent.match(/Polymer\(['"]([^'"]*)/);
     tag = matches && matches[1] || tag;
@@ -256,7 +270,7 @@ function cloneStyle(style) {
   return clone;
 }
 
-// path fixup: style elements in imports must be made relative to the main 
+// path fixup: style elements in imports must be made relative to the main
 // document. We fixup url's in url() and @import.
 var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
@@ -266,7 +280,7 @@ var path = {
     var doc = style.ownerDocument;
     var resolver = doc.createElement('a');
     style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
-    return style;  
+    return style;
   },
   resolveUrlsInCssText: function(cssText, urlObj) {
     var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
@@ -279,7 +293,7 @@ var path = {
       urlObj.href = urlPath;
       urlPath = urlObj.href;
       return pre + '\'' + urlPath + '\'' + post;
-    });    
+    });
   }
 }
 
