@@ -10,8 +10,8 @@
     "HTMLImports"
   ],
   "dependencies": {
-    "MutationObservers": "Polymer/MutationObservers#master",
-    "tools": "Polymer/tools#master"
+    "MutationObservers": "Polymer/MutationObservers#0.2.4",
+    "tools": "Polymer/tools#0.2.4"
   },
   "license": "BSD",
   "private": true,
@@ -21,5 +21,6 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "version": "0.2.4"
 }
