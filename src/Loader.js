@@ -90,8 +90,8 @@
             this.receive(url, elt, null, body);
         }.bind(this), 0);
       } else {
-        var receiveXhr = function(err, resource) {
-          this.receive(url, elt, err, resource);
+        var receiveXhr = function(err, resource, redirectedUrl) {
+          this.receive(url, elt, err, resource, redirectedUrl);
         }.bind(this);
         xhr.load(url, receiveXhr);
         // TODO(sorvell): blocked on)
@@ -109,16 +109,25 @@
         */
       }
     },
-    receive: function(url, elt, err, resource) {
+    receive: function(url, elt, err, resource, redirectedUrl) {
       this.cache[url] = resource;
       var $p = this.pending[url];
+      if ( redirectedUrl ) {
+        this.cache[redirectedUrl] = resource;
+        $p = $p.concat(this.pending[redirectedUrl]);
+      }
       for (var i=0, l=$p.length, p; (i<l) && (p=$p[i]); i++) {
         //if (!err) {
-          this.onload(url, p, resource);
+          // If url was redirected, use the redirected location so paths are
+          // calculated relative to that.
+          this.onload(redirectedUrl || url, p, resource);
         //}
         this.tail();
       }
       this.pending[url] = null;
+      if ( redirectedUrl ) {
+        this.pending[redirectedUrl] = null;
+      }
     },
     tail: function() {
       --this.inflight;
@@ -146,8 +155,17 @@
       request.open('GET', url, xhr.async);
       request.addEventListener('readystatechange', function(e) {
         if (request.readyState === 4) {
+          // Servers redirecting an import can add a Location header to help us
+          // polyfill correctly.
+          var locationHeader = request.getResponseHeader("Location");
+          var redirectedUrl = null;
+          if (locationHeader) {
+            var redirectedUrl = (locationHeader.substr( 0, 1 ) === "/")
+              ? location.origin + locationHeader  // Location is a relative path
+              : redirectedUrl;                    // Full path
+          }
           next.call(nextContext, !xhr.ok(request) && request,
-              request.response || request.responseText, url);
+              request.response || request.responseText, redirectedUrl);
         }
       });
       request.send();
