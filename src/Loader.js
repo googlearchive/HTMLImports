@@ -112,7 +112,7 @@
     receive: function(url, elt, err, resource, redirectedUrl) {
       this.cache[url] = resource;
       var $p = this.pending[url];
-      if ( redirectedUrl ) {
+      if ( redirectedUrl && redirectedUrl !== url ) {
         this.cache[redirectedUrl] = resource;
         $p = $p.concat(this.pending[redirectedUrl]);
       }
@@ -125,7 +125,7 @@
         this.tail();
       }
       this.pending[url] = null;
-      if ( redirectedUrl ) {
+      if ( redirectedUrl && redirectedUrl !== url ) {
         this.pending[redirectedUrl] = null;
       }
     },
