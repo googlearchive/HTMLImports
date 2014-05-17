@@ -217,8 +217,7 @@ function watchImportsLoad(callback, doc) {
   var loaded = 0, l = imports.length;
   function checkDone(d) { 
     if (loaded == l) {
-      // go async to ensure parser isn't stuck on a script tag
-      requestAnimationFrame(callback);
+      callback && callback();
     }
   }
   function loadedImport(e) {
@@ -240,8 +239,48 @@ function watchImportsLoad(callback, doc) {
 }
 
 function isImportLoaded(link) {
-  return useNative ? (link.import && (link.import.readyState !== 'loading')) :
+  return useNative ? (link.import && (link.import.readyState !== 'loading')) || link.__loaded :
       link.__importParsed;
+}
+
+// TODO(sorvell): install a mutation observer to see if HTMLImports have loaded
+// this is a workaround for https://www.w3.org/Bugs/Public/show_bug.cgi?id=25007
+// and should be removed when this bug is addressed.
+if (useNative) {
+  new MutationObserver(function(mxns) {
+    for (var i=0, l=mxns.length, m; (i < l) && (m=mxns[i]); i++) {
+      if (m.addedNodes) {
+        handleImports(m.addedNodes);
+      }
+    }
+  }).observe(document.head, {childList: true});
+
+  function handleImports(nodes) {
+    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+      if (isImport(n)) {
+        handleImport(n);  
+      }
+    }
+  }
+
+  function isImport(element) {
+    return element.localName === 'link' && element.rel === 'import';
+  }
+
+  function handleImport(element) {
+    var loaded = element.import;
+    if (loaded) {
+      markTargetLoaded({target: element});
+    } else {
+      element.addEventListener('load', markTargetLoaded);
+      element.addEventListener('error', markTargetLoaded);
+    }
+  }
+
+  function markTargetLoaded(event) {
+    event.target.__loaded = true;
+  }
+
 }
 
 // exports

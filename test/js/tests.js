@@ -10,6 +10,7 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/style-links.html');
   htmlTest('html/style-paths.html');
   htmlTest('html/load.html');
+  htmlTest('html/load-404.html');
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
   htmlTest('html/dynamic.html');

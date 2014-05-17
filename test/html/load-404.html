@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <title>load ready 404 test</title>
+    <script>
+    </script>
+    <script src="../../../tools/test/htmltest.js"></script>
+    <script src="../../../tools/test/chai/chai.js"></script>
+    <script src="../../html-imports.js"></script>
+    <link rel="import" href="imports/404-1.html">
+    <link rel="import" href="imports/404-2.html">
+    <link rel="import" href="imports/404-3.html">
+    <link rel="import" href="imports/404-4.html">
+    
+  </head>
+  <body>
+    <script>
+      var loaded = false;
+      document.addEventListener('HTMLImportsLoaded', function() {
+        loaded = true;
+        check();
+      });
+
+      // wait some time and then fail if no load event is fired
+      var timeout = setTimeout(function() {
+        check();
+      }, 2000);
+
+      function check() {
+        clearTimeout(timeout);
+        chai.assert.ok(loaded, '404\'d imports are loaded');
+        done();
+      }
+    </script>
+  </body>
+</html>
