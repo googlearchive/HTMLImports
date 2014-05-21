@@ -41,7 +41,7 @@ The polyfill loads linked stylesheets, external scripts, and nested HTML imports
 
 #### The WebComponentsReady event
 
-Under native imports, `<script>` tags in the main document block the loading of imports. This is to insure the imports have loaded and any registered elements in them have been upgrade. This native behavior is difficult to polyfill so we {{site.project_title}} doesn't try. Instead the `WebComponentsReady` event is a stand in for this behavior:
+Under native imports, `<script>` tags in the main document block the loading of imports. This is to ensure the imports have loaded and any registered elements in them have been upgraded. This native behavior is difficult to polyfill so the [HTML Imports polyfill](https://github.com/Polymer/HTMLImports) doesn't try. Instead the `WebComponentsReady` event is a stand in for this behavior:
 
     <script>
       window.addEventListener('WebComponentsReady', function(e) {
