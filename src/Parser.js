@@ -55,9 +55,14 @@ var importParser = {
       fn.call(this, elt);
     }
   },
-  // only 1 element may be parsed at a time; parsing is async so, each
+  // only 1 element may be parsed at a time; parsing is async so each
   // parsing implementation must inform the system that parsing is complete
   // via markParsingComplete.
+  // To prompt the system to parse the next element, parseNext should then be
+  // called.
+  // Note, parseNext used to be included at the end of markParsingComplete, but
+  // we must not do this so that, for example, we can (1) mark parsing complete 
+  // then (2) fire an import load event, and then (3) parse the next resource.
   markParsing: function(elt) {
     flags.parse && console.log('parsing', elt);
     this.parsingElement = elt;
@@ -69,16 +74,16 @@ var importParser = {
     }
     this.parsingElement = null;
     flags.parse && console.log('completed', elt);
-    this.parseNext();
   },
   parseImport: function(elt) {
-    elt.import.__importParsed = true;
     // TODO(sorvell): consider if there's a better way to do this;
     // expose an imports parsing hook; this is needed, for example, by the
     // CustomElements polyfill.
     if (HTMLImports.__importsParsingHook) {
       HTMLImports.__importsParsingHook(elt);
     }
+    elt.import.__importParsed = true;
+    this.markParsingComplete(elt);
     // fire load event
     if (elt.__resource) {
       elt.dispatchEvent(new CustomEvent('load', {bubbles: false}));    
@@ -96,7 +101,7 @@ var importParser = {
         }
       }
     }
-    this.markParsingComplete(elt);
+    this.parseNext();
   },
   parseLink: function(linkElt) {
     if (nodeIsImport(linkElt)) {
@@ -126,6 +131,7 @@ var importParser = {
         callback(e);
       }
       self.markParsingComplete(elt);
+      self.parseNext();
     };
     elt.addEventListener('load', done);
     elt.addEventListener('error', done);
