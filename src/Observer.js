@@ -9,6 +9,7 @@ license that can be found in the LICENSE file.
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 var importer = scope.importer;
+var parser = scope.parser;
 
 // we track mutations for addedNodes, looking for imports
 function handler(mutations) {
@@ -21,13 +22,18 @@ function handler(mutations) {
 
 // find loadable elements and add them to the importer
 function addedNodes(nodes) {
+  var owner;
   for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+    owner = owner || n.ownerDocument;
     if (shouldLoadNode(n)) {
       importer.loadNode(n);
     }
     if (n.children && n.children.length) {
       addedNodes(n.children);
     }
+  }
+  if (owner) {
+    parser.invalidateParse(owner);
   }
 }
 

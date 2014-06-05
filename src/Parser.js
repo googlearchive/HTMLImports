@@ -75,6 +75,21 @@ var importParser = {
     this.parsingElement = null;
     flags.parse && console.log('completed', elt);
   },
+  invalidateParse: function(doc) {
+    if (doc && doc.__importLink) {
+      doc.__importParsed = doc.__importLink.__importParsed = false;
+      this.parseSoon();
+    }
+  },
+  parseSoon: function() {
+    if (this._parseSoon) {
+      cancelAnimationFrame(this._parseDelay);
+    }
+    var parser = this;
+    this._parseSoon = requestAnimationFrame(function() {
+      parser.parseNext();
+    });
+  },
   parseImport: function(elt) {
     // TODO(sorvell): consider if there's a better way to do this;
     // expose an imports parsing hook; this is needed, for example, by the
