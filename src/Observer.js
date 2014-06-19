@@ -32,9 +32,14 @@ function addedNodes(nodes) {
       addedNodes(n.children);
     }
   }
+  // TODO(sorvell): This is not the right approach here. We shouldn't need to
+  // invalidate parsing when an element is added. Disabling this code 
+  // until a better approach is found.
+  /*
   if (owner) {
     parser.invalidateParse(owner);
   }
+  */
 }
 
 function shouldLoadNode(node) {
