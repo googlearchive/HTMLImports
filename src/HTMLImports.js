@@ -287,9 +287,12 @@ if (useNative) {
 scope.hasNative = hasNative;
 scope.useNative = useNative;
 scope.importer = importer;
-scope.whenImportsReady = whenImportsReady;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.isImportLoaded = isImportLoaded;
 scope.importLoader = importLoader;
+scope.whenReady = whenImportsReady;
+
+// deprecated
+scope.whenImportsReady = whenImportsReady;
 
 })(window.HTMLImports);
