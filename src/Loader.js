@@ -149,7 +149,11 @@
     },
     load: function(url, next, nextContext) {
       var request = new XMLHttpRequest();
-      if (scope.flags.debug || scope.flags.bust) {
+      if (url.indexOf('?') != -1) {
+        // do nothing if query is provided
+      } else if (window.Platform && Platform.version) {
+        url += '?' + Platform.version;
+      } else if (scope.flags.debug || scope.flags.bust) {
         url += '?' + Math.random();
       }
       request.open('GET', url, xhr.async);

@@ -124,6 +124,13 @@ var importParser = {
     } else {
       // make href absolute
       linkElt.href = linkElt.href;
+      if (linkElt.href.substring(0, 5) == 'data:' || linkElt.href.indexOf('?') != -1) {
+        // do nothing for data-uri or query is provided
+      } else if (window.Platform && Platform.version) {
+        linkElt.href += '?' + Platform.version;
+      } else if (flags.debug || flags.bust) {
+        linkElt.href += '?' + Math.random();
+      }
       this.parseGeneric(linkElt);
     }
   },
@@ -188,6 +195,13 @@ var importParser = {
     script.__importElement = scriptElt;
     script.src = scriptElt.src ? scriptElt.src : 
         generateScriptDataUrl(scriptElt);
+    if (script.src.substring(0, 5) == 'data:' || script.src.indexOf('?') != -1) {
+      // do nothing for data-uri or query is provided
+    } else if (window.Platform && Platform.version) {
+      script.src += '?' + Platform.version;
+    } else if (flags.debug || flags.bust) {
+      script.src += '?' + Math.random();
+    }
     scope.currentScript = scriptElt;
     this.trackElement(script, function(e) {
       script.parentNode.removeChild(script);
