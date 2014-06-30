@@ -149,12 +149,10 @@
     },
     load: function(url, next, nextContext) {
       var request = new XMLHttpRequest();
-      if (url.indexOf('?') != -1) {
-        // do nothing if query is provided
-      } else if (window.Platform && Platform.version) {
-        url += '?' + Platform.version;
-      } else if (scope.flags.debug || scope.flags.bust) {
+      if (scope.flags.debug || scope.flags.bust) {
         url += '?' + Math.random();
+      } else if (url.indexOf('?') == -1 && window.Platform && Platform.version) {
+        url += '?' + Platform.version;
       }
       request.open('GET', url, xhr.async);
       request.addEventListener('readystatechange', function(e) {

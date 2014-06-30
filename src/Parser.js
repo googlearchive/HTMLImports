@@ -124,12 +124,13 @@ var importParser = {
     } else {
       // make href absolute
       linkElt.href = linkElt.href;
-      if (linkElt.href.substring(0, 5) == 'data:' || linkElt.href.indexOf('?') != -1) {
-        // do nothing for data-uri or query is provided
-      } else if (window.Platform && Platform.version) {
-        linkElt.href += '?' + Platform.version;
+      if (linkElt.href.substring(0, 5) == 'data:') {
+        // do nothing for data-uri
       } else if (flags.debug || flags.bust) {
+        // HTMLImports.flags
         linkElt.href += '?' + Math.random();
+      } else if (linkElt.href.indexOf('?') == -1 && window.Platform && Platform.version) {
+        linkElt.href += '?' + Platform.version;
       }
       this.parseGeneric(linkElt);
     }
@@ -195,12 +196,13 @@ var importParser = {
     script.__importElement = scriptElt;
     script.src = scriptElt.src ? scriptElt.src : 
         generateScriptDataUrl(scriptElt);
-    if (script.src.substring(0, 5) == 'data:' || script.src.indexOf('?') != -1) {
-      // do nothing for data-uri or query is provided
-    } else if (window.Platform && Platform.version) {
-      script.src += '?' + Platform.version;
+    if (script.src.substring(0, 5) == 'data:') {
+      // do nothing for data-uri
     } else if (flags.debug || flags.bust) {
+      // HTMLImports.flags
       script.src += '?' + Math.random();
+    } else if (script.src.indexOf('?') == -1 && window.Platform && Platform.version) {
+      script.src += '?' + Platform.version;
     }
     scope.currentScript = scriptElt;
     this.trackElement(script, function(e) {
