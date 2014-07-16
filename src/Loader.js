@@ -151,6 +151,8 @@
       var request = new XMLHttpRequest();
       if (scope.flags.debug || scope.flags.bust) {
         url += '?' + Math.random();
+      } else if (url.indexOf('?') == -1 && window.Platform && Platform.version) {
+        url += '?' + Platform.version;
       }
       request.open('GET', url, xhr.async);
       request.addEventListener('readystatechange', function(e) {
