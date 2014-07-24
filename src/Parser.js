@@ -146,7 +146,6 @@ var importParser = {
     return n;
   },
   addElementToDocument: function(elt) {
-    //document.head.appendChild(elt);
     var port = this.rootImportForElement(elt.__importElement || elt);
     var l = port.__insertedElements = port.__insertedElements || 0;
     var refNode = port.nextElementSibling;
