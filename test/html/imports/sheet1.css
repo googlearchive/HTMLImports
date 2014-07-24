@@ -1,3 +1,7 @@
 .red {
-  background: red;
+  background-color: red;
+}
+
+.overridden {
+	background-color: green;
 }

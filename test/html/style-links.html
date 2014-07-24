@@ -1,41 +1,58 @@
 <!doctype html>
 <html>
-  <head>
-    <title>Style Links Test</title>
-    <script src="../../../tools/test/htmltest.js"></script>
-    <script src="../../../tools/test/chai/chai.js"></script>
-    <script src="../../html-imports.js"></script>
-    <link rel="import" href="imports/style-links-import.html">
-  </head>
-  <body>
-    <script>
-      addEventListener('HTMLImportsLoaded', function() {
-        
-        function checkLinksForContent(root) {
-          var links = root.querySelectorAll('link');
-          Array.prototype.forEach.call(links, function(link) {
-            chai.assert.ok(link.__resource, 'style link loaded', link);
-          })
-        }
-        
-        setTimeout(function() {
-          checkLinksForContent(document.body);
-          done();
-          return;
-          
-          var imp = document.head.querySelector('link[rel=import]');
-          chai.assert.ok(imp.content, 'import has content');
-          
-          var styleLink = document.querySelector('link[rel=stylesheet]');
-          chai.assert.isUndefined(styleLink.__resource);
-          
-          checkLinksForContent(imp.content.querySelector('body'));
-          
-          chai.assert.equal(document.styleSheets.length, 2);
-          
-          done();
-        }, 50);
-      });
-    </script>
-  </body>
+<head>
+  <title>Style Links Test</title>
+  <script src="../../../tools/test/htmltest.js"></script>
+  <script src="../../../tools/test/chai/chai.js"></script>
+  <script src="../../html-imports.js"></script>
+  <link rel="import" href="imports/style-links-import.html">
+  <style>
+    .overridden {
+      background-color: black;
+    }
+  </style>
+  <link rel="import" href="imports/style-elements-import.html">
+  <style>
+    .overridden-style {
+      background-color: black;
+    }
+  </style>
+</head>
+<body>
+  <div class="red">red?</div>
+  <div class="blue">white?</div>
+  <div class="orange">orange?</div>
+
+  <div class="overridden">black?</div>
+
+  <div class="styled">red?</div>
+  <div class="overridden-style">black?</div>
+
+
+  <script>
+    addEventListener('HTMLImportsLoaded', function() {
+      
+      var imp = document.head.querySelector('link[rel=import]');
+      chai.assert.ok(imp.import, 'import has content');
+      
+      function computedStyle(selector) {
+        return getComputedStyle(document.querySelector(selector));
+      }
+
+      // styles in stylesheets are applied
+      chai.assert.equal(computedStyle('.red').backgroundColor, 'rgb(255, 0, 0)');
+      chai.assert.equal(computedStyle('.orange').backgroundColor, 'rgb(255, 165, 0)');
+      chai.assert.equal(computedStyle('.blue').backgroundColor, 'rgb(0, 0, 255)');
+      // styles in stylesheets are applied in the correct order and overriddable
+      chai.assert.equal(computedStyle('.overridden').backgroundColor, 'rgb(0, 0, 0)');
+      // styles in style elements are applied
+      chai.assert.equal(computedStyle('.styled').backgroundColor, 'rgb(255, 0, 0)');
+      // styles in style are applied in the correct order and overriddable
+      chai.assert.equal(computedStyle('.overridden-style').backgroundColor, 'rgb(0, 0, 0)');
+      
+      
+      done();
+    });
+  </script>
+</body>
 </html>

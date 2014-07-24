@@ -136,7 +136,24 @@ var importParser = {
   },
   parseGeneric: function(elt) {
     this.trackElement(elt);
-    document.head.appendChild(elt);
+    this.addElementToDocument(elt);
+  },
+  rootImportForElement: function(elt) {
+    var n = elt;
+    while (n.ownerDocument.__importLink) {
+      n = n.ownerDocument.__importLink;
+    }
+    return n;
+  },
+  addElementToDocument: function(elt) {
+    //document.head.appendChild(elt);
+    var port = this.rootImportForElement(elt.__importElement || elt);
+    var l = port.__insertedElements = port.__insertedElements || 0;
+    var refNode = port.nextElementSibling;
+    for (var i=0; i < l; i++) {
+      refNode = refNode && refNode.nextElementSibling;
+    }
+    port.parentNode.insertBefore(elt, refNode);
   },
   // tracks when a loadable element has loaded
   trackElement: function(elt, callback) {
@@ -193,7 +210,7 @@ var importParser = {
       script.parentNode.removeChild(script);
       scope.currentScript = null;  
     });
-    document.head.appendChild(script);
+    this.addElementToDocument(script);
   },
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
