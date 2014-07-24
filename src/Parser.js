@@ -164,9 +164,13 @@ var importParser = {
       self.markParsingComplete(elt);
       self.parseNext();
     };
-    elt.addEventListener('load', done);
-    elt.addEventListener('error', done);
-
+    // NOTE:Android Browser lt 4.4 does not fire load event,fire directly is a good solution
+     if(elt.rel == "stylesheet"){
+    	done();
+    }else{
+    	elt.addEventListener('load', done);
+    	elt.addEventListener('error', done);	
+    }
     // NOTE: IE does not fire "load" event for styles that have already loaded
     // This is in violation of the spec, so we try our hardest to work around it
     if (isIe && elt.localName === 'style') {
