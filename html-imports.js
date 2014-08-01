@@ -11,6 +11,7 @@ var scopeName = 'HTMLImports';
 var modules = [
   '../MutationObservers/mutation-observers.js',
   'src/scope.js',
+  'src/base.js',
   'src/Loader.js',
   'src/Parser.js',
   'src/HTMLImports.js',

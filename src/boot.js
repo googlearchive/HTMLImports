@@ -7,34 +7,9 @@
 
 // bootstrap
 
-// IE shim for CustomEvent
-if (typeof window.CustomEvent !== 'function') {
-  window.CustomEvent = function(inType, dictionary) {
-     var e = document.createEvent('HTMLEvents');
-     e.initEvent(inType,
-        dictionary.bubbles === false ? false : true,
-        dictionary.cancelable === false ? false : true,
-        dictionary.detail);
-     return e;
-  };
-}
-
 // TODO(sorvell): SD polyfill intrusion
 var doc = window.ShadowDOMPolyfill ? 
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
-
-// Fire the 'HTMLImportsLoaded' event when imports in document at load time 
-// have loaded. This event is required to simulate the script blocking 
-// behavior of native imports. A main document script that needs to be sure
-// imports have loaded should wait for this event.
-HTMLImports.whenImportsReady(function() {
-  HTMLImports.ready = true;
-  HTMLImports.readyTime = new Date().getTime();
-  doc.dispatchEvent(
-    new CustomEvent('HTMLImportsLoaded', {bubbles: true})
-  );
-});
-
 
 // no need to bootstrap the polyfill when native imports is available.
 if (!HTMLImports.useNative) {
