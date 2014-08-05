@@ -24,7 +24,6 @@
   <body>
     <script>
       addEventListener('HTMLImportsLoaded', function() {
-        console.log('ready');
         chai.assert.equal(dedupe, 1, 'import loaded');
         done();
       });

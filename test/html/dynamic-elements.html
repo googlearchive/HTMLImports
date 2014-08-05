@@ -12,7 +12,7 @@
 
   <script>
     document.addEventListener('asyncElementsAdded', function() {
-      HTMLImports.whenImportsReady(function() {
+      HTMLImports.whenReady(function() {
         chai.assert.isTrue(window.asyncScript, 'async added script ran');
         var computed = getComputedStyle(document.querySelector('#asyncStyled'));
         chai.assert.equal(computed.backgroundColor, 'rgb(255, 0, 0)', 'async added style applied');

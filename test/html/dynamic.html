@@ -24,7 +24,7 @@
               chai.assert.ok(e.target.import);
             });
           }
-          HTMLImports.whenImportsReady(function() {
+          HTMLImports.whenReady(function() {
             chai.assert.equal(loads, 2);
             done();
           });

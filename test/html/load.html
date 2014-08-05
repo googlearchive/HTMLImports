@@ -26,11 +26,7 @@
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/load-1.html" onload="importLoaded(event)">
     <link rel="import" href="imports/load-2.html" onload="importLoaded(event)">
-    <!-- TODO(sorvell): note, native imports currently fires onload for 404
-    documents. This doesn't really make sense, check spec. 
-    See: https://code.google.com/p/chromium/issues/detail?id=336609
-    -->
-    <link rel="import" href="imports/404.html" onload="importError(event)" onerror="importError(event)">
+    <link rel="import" id="willError" href="imports/404.html" onerror="importError(event)">
   </head>
   <body>
     <div id="test1" class="red">Test</div>
