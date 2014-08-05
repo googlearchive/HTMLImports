@@ -120,7 +120,7 @@
         //if (!err) {
           // If url was redirected, use the redirected location so paths are
           // calculated relative to that.
-          this.onload(redirectedUrl || url, p, resource);
+          this.onload(redirectedUrl || url, p, resource, err);
         //}
         this.tail();
       }
