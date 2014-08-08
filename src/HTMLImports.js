@@ -66,13 +66,15 @@ if (!useNative) {
       if (isDocumentLink(elt)) {
         var doc = this.documents[url];
         // if we've never seen a document at this url
-        if (!doc) {
+        if (doc === undefined) {
           // generate an HTMLDocument from data
-          doc = makeDocument(resource, url);
-          doc.__importLink = elt;
-          // TODO(sorvell): we cannot use MO to detect parsed nodes because
-          // SD polyfill does not report these as mutations.
-          this.bootDocument(doc);
+          doc = err ? null : makeDocument(resource, url);
+          if (doc) {
+            doc.__importLink = elt;
+            // note, we cannot use MO to detect parsed nodes because
+            // SD polyfill does not report these as mutations.
+            this.bootDocument(doc);
+          }
           // cache document
           this.documents[url] = doc;
         }

@@ -7,10 +7,14 @@
     <script src="../../../tools/test/htmltest.js"></script>
     <script src="../../../tools/test/chai/chai.js"></script>
     <script src="../../html-imports.js"></script>
-    <link rel="import" href="imports/404-1.html">
-    <link rel="import" href="imports/404-2.html">
-    <link rel="import" href="imports/404-3.html">
-    <link rel="import" href="imports/404-4.html">
+    <script>
+      var errors = 0;
+      function errorHandler() {
+        errors++;
+      }
+    </script>
+    <link rel="import" href="imports/404-1.html" onerror="errorHandler()">
+    <link rel="import" href="imports/404-2.html" onerror="errorHandler()">
     
   </head>
   <body>
@@ -29,6 +33,8 @@
       function check() {
         clearTimeout(timeout);
         chai.assert.ok(loaded, '404\'d imports are loaded');
+        chai.assert.equal(document.querySelector('link').import, null, '404\'d link.import is null');
+        chai.assert.equal(errors, 2, '404\'d generate error event');
         done();
       }
     </script>

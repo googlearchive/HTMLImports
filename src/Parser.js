@@ -99,7 +99,9 @@ var importParser = {
     if (HTMLImports.__importsParsingHook) {
       HTMLImports.__importsParsingHook(elt);
     }
-    elt.import.__importParsed = true;
+    if (elt.import) {
+      elt.import.__importParsed = true;
+    }
     this.markParsingComplete(elt);
     // fire load event
     if (elt.__resource && !elt.__error) {
@@ -218,13 +220,15 @@ var importParser = {
     return !this.parsingElement && this.nextToParseInDoc(mainDoc);
   },
   nextToParseInDoc: function(doc, link) {
-    var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));
-    for (var i=0, l=nodes.length, p=0, n; (i<l) && (n=nodes[i]); i++) {
-      if (!this.isParsed(n)) {
-        if (this.hasResource(n)) {
-          return nodeIsImport(n) ? this.nextToParseInDoc(n.import, n) : n;
-        } else {
-          return;
+    if (doc) {
+      var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));
+      for (var i=0, l=nodes.length, p=0, n; (i<l) && (n=nodes[i]); i++) {
+        if (!this.isParsed(n)) {
+          if (this.hasResource(n)) {
+            return nodeIsImport(n) ? this.nextToParseInDoc(n.import, n) : n;
+          } else {
+            return;
+          }
         }
       }
     }
@@ -240,7 +244,7 @@ var importParser = {
     return node.__importParsed;
   },
   hasResource: function(node) {
-    if (nodeIsImport(node) && !node.import) {
+    if (nodeIsImport(node) && (node.import === undefined)) {
       return false;
     }
     return true;

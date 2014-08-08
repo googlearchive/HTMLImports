@@ -21,6 +21,9 @@
 
           Object.keys(HTMLImports.importer.documents).forEach(function(key) {
             var doc = HTMLImports.importer.documents[key];
+            if (!doc) {
+              return;
+            }
             var links = doc.querySelectorAll('link[rel=import]');
             Array.prototype.forEach.call(links, function(link) {
               var href = link.getAttribute('href');
