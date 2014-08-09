@@ -7,16 +7,11 @@
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/dedupe.html">
     <script>
-      var a = document.createElement('a');
-      a.href = document.baseURI;
-      var path = a.pathname.split('/');
-      path.pop();
-      //
       var link = document.createElement('link');
-      link.href = path.join('/') + '/imports/dedupe.html';
+      link.href = 'imports/dedupe.html';
       link.rel = 'import';
       link.addEventListener('load', function(e) {
-        console.log('dynamic link loaded', e.target);
+        console.log('dynamic link loaded', e.target.href);
       })
       document.head.appendChild(link);
     </script>
