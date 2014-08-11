@@ -10,7 +10,7 @@
 
 var IMPORT_LINK_TYPE = 'import';
 var flags = scope.flags;
-var isIe = /Trident/.test(navigator.userAgent);
+var isIE = scope.isIE;
 // TODO(sorvell): SD polyfill intrusion
 var mainDoc = window.ShadowDOMPolyfill ? 
     window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
@@ -173,7 +173,7 @@ var importParser = {
 
     // NOTE: IE does not fire "load" event for styles that have already loaded
     // This is in violation of the spec, so we try our hardest to work around it
-    if (isIe && elt.localName === 'style') {
+    if (isIE && elt.localName === 'style') {
       var fakeLoad = false;
       // If there's not @import in the textContent, assume it has loaded
       if (elt.textContent.indexOf('@import') == -1) {
@@ -330,6 +330,5 @@ var path = {
 // exports
 scope.parser = importParser;
 scope.path = path;
-scope.isIE = isIe;
 
 })(HTMLImports);

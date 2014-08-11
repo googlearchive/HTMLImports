@@ -10,6 +10,8 @@
 var hasNative = ('import' in document.createElement('link'));
 var useNative = hasNative;
 
+isIE = /Trident/.test(navigator.userAgent);
+
 // TODO(sorvell): SD polyfill intrusion
 var mainDoc = window.ShadowDOMPolyfill ? 
     ShadowDOMPolyfill.wrapIfNeeded(document) : document;
@@ -41,7 +43,7 @@ function whenImportsReady(callback, doc) {
 }
 
 // call the callback when the document is in a ready state (has dom)
-var requiredReadyState = HTMLImports.isIE ? 'complete' : 'interactive';
+var requiredReadyState = isIE ? 'complete' : 'interactive';
 var READY_EVENT = 'readystatechange';
 function isDocumentReady(doc) {
   return (doc.readyState === 'complete' ||
@@ -152,6 +154,7 @@ whenImportsReady(function() {
 scope.useNative = useNative;
 scope.isImportLoaded = isImportLoaded;
 scope.whenReady = whenImportsReady;
+scope.isIE = isIE;
 
 // deprecated
 scope.whenImportsReady = whenImportsReady;
