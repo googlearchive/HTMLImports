@@ -4,7 +4,9 @@
  * license that can be found in the LICENSE file.
  */
 module.exports = function(grunt) {
-  HTMLComponents = grunt.file.readJSON('build.json');
+  var readManifest = require('../tools/loader/readManifest.js');
+
+  HTMLComponents = readManifest('build.json');
   grunt.initConfig({
     karma: {
       options: {
@@ -22,7 +24,7 @@ module.exports = function(grunt) {
       HTMLComponents: {
         options: {
           sourceMap: 'html-components.min.source-map.js',
-          banner: grunt.file.read('LICENSE')
+          banner: grunt.file.read('banner.txt')
         },
         files: {
           'html-imports.min.js': HTMLComponents
