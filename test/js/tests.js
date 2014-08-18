@@ -11,6 +11,7 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/style-paths.html');
   htmlTest('html/load.html');
   htmlTest('html/load-404.html');
+  htmlTest('html/base/load-base.html');
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
   htmlTest('html/dynamic.html');

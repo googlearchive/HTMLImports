@@ -152,7 +152,8 @@ if (!useNative) {
   if (!document.baseURI) {
     var baseURIDescriptor = {
       get: function() {
-        return window.location.href;
+        var base = document.querySelector('base');
+        return base ? base.href : window.location.href;
       },
       configurable: true
     };
