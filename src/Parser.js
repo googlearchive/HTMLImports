@@ -257,15 +257,7 @@ function nodeIsImport(elt) {
 
 function generateScriptDataUrl(script) {
   var scriptContent = generateScriptContent(script);
-  var b64 = 'data:text/javascript';
-  // base64 may be smaller, but does not handle unicode characters
-  // attempt base64 first, fall back to escaped text
-  try {
-    b64 += (';base64,' + btoa(scriptContent));
-  } catch(e) {
-    b64 += (';charset=utf-8,' + encodeURIComponent(scriptContent));
-  }
-  return b64;
+  return 'data:text/javascript;charset=utf-8,' + encodeURIComponent(scriptContent);
 }
 
 function generateScriptContent(script) {
