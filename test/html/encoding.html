@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <script src="../../../tools/test/htmltest.js"></script>
+  <script src="../../../tools/test/chai/chai.js"></script>
+  <script src="../../html-imports.js"></script>
+  <link rel="import" href="imports/encoding-import.html">
+</head>
+<body>
+  <span></span>
+  <script>
+    function test() {
+      run();
+      var span = document.querySelector('span');
+      chai.assert.equal(span.textContent, 'Róbert Viðar Bjarnason');
+      done();
+    }
+
+    if (HTMLImports.ready) {
+      test();
+    } else {
+      addEventListener('HTMLImportsLoaded', test);
+    }
+  </script>
+</body>
+</html>

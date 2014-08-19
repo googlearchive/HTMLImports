@@ -18,4 +18,5 @@ htmlSuite('HTMLImports', function() {
   // TODO(sjmiles): feature not implemented currently
   //htmlTest('html/dynamic-elements.html');
   htmlTest('html/csp.html');
+  htmlTest('html/encoding.html');
 });
