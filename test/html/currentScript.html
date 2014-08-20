@@ -6,20 +6,15 @@
     <script src="../../../tools/test/chai/chai.js"></script>
     <script src="../../html-imports.js"></script>
     <link rel="import" href="imports/script-1.html">
+    <script src="imports/current-script.js"></script>
   </head>
   <body>
     <script>
-      function test() {
-        chai.assert.equal(document._currentScript, document.currentScript, '_currentScript reflects currentScript');
-        chai.assert.isTrue(window.remoteCurrentScriptExecuted);
+      chai.assert.equal(document._currentScript.parentNode, document.body, '_currentScript set in main document');
+      addEventListener('HTMLImportsLoaded', function() {
+        chai.assert.equal(window.remoteCurrentScriptExecuted, 2, 'remote script executed from import and main document');
         done();
-      }
-
-      if (HTMLImports.ready) {
-        test();
-      } else {
-        addEventListener('HTMLImportsLoaded', test);
-      }
+      });
     </script>
   </body>
 </html>

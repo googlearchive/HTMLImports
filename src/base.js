@@ -22,7 +22,12 @@ var mainDoc = window.ShadowDOMPolyfill ?
 // and the polyfill are in use.
 var currentScriptDescriptor = {
   get: function() {
-    return HTMLImports.currentScript || document.currentScript;
+    return HTMLImports.currentScript || document.currentScript ||
+        // NOTE: only works when called in synchronously executing code.
+        // readyState should check if `loading` but IE10 is 
+        // interactive when scripts run so we cheat.
+        (document.readyState !== 'complete' ? 
+        document.scripts[document.scripts.length - 1] : null);
   },
   configurable: true
 };
