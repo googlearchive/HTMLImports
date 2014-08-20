@@ -114,22 +114,13 @@
     receive: function(url, elt, err, resource, redirectedUrl) {
       this.cache[url] = resource;
       var $p = this.pending[url];
-      if ( redirectedUrl && redirectedUrl !== url ) {
-        this.cache[redirectedUrl] = resource;
-        $p = $p.concat(this.pending[redirectedUrl]);
-      }
       for (var i=0, l=$p.length, p; (i<l) && (p=$p[i]); i++) {
-        //if (!err) {
-          // If url was redirected, use the redirected location so paths are
-          // calculated relative to that.
-          this.onload(redirectedUrl || url, p, resource, err);
-        //}
+        // If url was redirected, use the redirected location so paths are
+        // calculated relative to that.
+        this.onload(url, p, resource, err, redirectedUrl);
         this.tail();
       }
       this.pending[url] = null;
-      if ( redirectedUrl && redirectedUrl !== url ) {
-        this.pending[redirectedUrl] = null;
-      }
     },
     tail: function() {
       --this.inflight;
@@ -164,7 +155,7 @@
           if (locationHeader) {
             var redirectedUrl = (locationHeader.substr( 0, 1 ) === "/")
               ? location.origin + locationHeader  // Location is a relative path
-              : redirectedUrl;                    // Full path
+              : locationHeader;                    // Full path
           }
           next.call(nextContext, !xhr.ok(request) && request,
               request.response || request.responseText, redirectedUrl);

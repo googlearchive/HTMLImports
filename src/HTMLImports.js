@@ -56,7 +56,7 @@ if (!useNative) {
       return doc === mainDoc ? this.documentPreloadSelectors :
           this.importsPreloadSelectors;
     },
-    loaded: function(url, elt, resource, err) {
+    loaded: function(url, elt, resource, err, redirectedUrl) {
       flags.load && console.log('loaded', url, elt);
       // store generic resource
       // TODO(sorvell): fails for nodes inside <template>.content
@@ -68,7 +68,7 @@ if (!useNative) {
         // if we've never seen a document at this url
         if (doc === undefined) {
           // generate an HTMLDocument from data
-          doc = err ? null : makeDocument(resource, url);
+          doc = err ? null : makeDocument(resource, redirectedUrl || url);
           if (doc) {
             doc.__importLink = elt;
             // note, we cannot use MO to detect parsed nodes because

@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <title>load redirect Test</title>
+  <script src="../../../../tools/test/htmltest.js"></script>
+  <script src="../../../../tools/test/chai/chai.js"></script>
+  <script src="../../../html-imports.js"></script>
+  <link rel="import" href="imports/load-1.html">
+</head>
+<body>
+  <div id="test" class="image"></div>
+  <script>
+    document.addEventListener('HTMLImportsLoaded', function() {
+      chai.assert.ok(window.redirect, 'redirected script ran');
+      var l = document.querySelector('link');
+      var a = document.createElement('a');
+      a.href = 'imports/redirect/load.html';
+      chai.assert.match(l.import.baseURI, new RegExp(a.pathname), 'import baseURI redirected');
+      setTimeout(function() {
+        var bg = getComputedStyle(document.querySelector('#test')).backgroundImage;
+        chai.assert.match(bg, /redirect\/googley.png/, 'import image properly referenced');
+        done();
+      });
+    });
+  </script>
+</body>
+</html>
