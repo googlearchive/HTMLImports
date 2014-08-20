@@ -93,9 +93,10 @@ function watchImportsLoad(callback, doc) {
   }
 }
 
+// NOTE: test for native imports loading is based on explicitly watching
+// all imports (see below).
 function isImportLoaded(link) {
-  return useNative ? (link.import && (link.import.readyState !== 'loading')) || link.__loaded :
-      link.__importParsed;
+  return useNative ? link.__loaded : link.__importParsed;
 }
 
 // TODO(sorvell): install a mutation observer to see if HTMLImports have loaded
