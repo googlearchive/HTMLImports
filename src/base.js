@@ -13,21 +13,25 @@ var useNative = hasNative;
 isIE = /Trident/.test(navigator.userAgent);
 
 // TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
-
+var hasShadowDOMPolyfill = Boolean(window.ShadowDOMPolyfill);
+var wrap = function(node) {
+  return hasShadowDOMPolyfill ? ShadowDOMPolyfill.wrapIfNeeded(node) : node;
+};
+var mainDoc = wrap(document);
+    
 // NOTE: We cannot polyfill document.currentScript because it's not possible
 // both to override and maintain the ability to capture the native value;
 // therefore we choose to expose _currentScript both when native imports
 // and the polyfill are in use.
 var currentScriptDescriptor = {
   get: function() {
-    return HTMLImports.currentScript || document.currentScript ||
+    var script = HTMLImports.currentScript || document.currentScript ||
         // NOTE: only works when called in synchronously executing code.
         // readyState should check if `loading` but IE10 is 
         // interactive when scripts run so we cheat.
         (document.readyState !== 'complete' ? 
         document.scripts[document.scripts.length - 1] : null);
+    return wrap(script);
   },
   configurable: true
 };
