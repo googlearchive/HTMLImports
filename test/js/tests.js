@@ -19,4 +19,5 @@ htmlSuite('HTMLImports', function() {
   //htmlTest('html/dynamic-elements.html');
   htmlTest('html/csp.html');
   htmlTest('html/encoding.html');
+  htmlTest('html/HTMLImportsLoaded-native.html');
 });

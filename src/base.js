@@ -5,7 +5,9 @@
  * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
  * Code distributed by Google as part of the polymer project is also
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */(function(scope) {
+ */
+
+(function(scope) {
 
 var hasNative = ('import' in document.createElement('link'));
 var useNative = hasNative;
@@ -113,9 +115,17 @@ function isImportLoaded(link) {
   return useNative ? link.__loaded : link.__importParsed;
 }
 
-// TODO(sorvell): install a mutation observer to see if HTMLImports have loaded
-// this is a workaround for https://www.w3.org/Bugs/Public/show_bug.cgi?id=25007
-// and should be removed when this bug is addressed.
+// TODO(sorvell): Workaround for 
+// https://www.w3.org/Bugs/Public/show_bug.cgi?id=25007, should be removed when
+// this bug is addressed.
+// (1) Install a mutation observer to see when HTMLImports have loaded
+// (2) if this script is run during document load it will watch any existing
+// imports for loading.
+//
+// NOTE: The workaround has restricted functionality: (1) it's only compatible
+// with imports that are added to document.head since the mutation observer 
+// watches only head for perf reasons, (2) it requires this script
+// to run before any imports have completed loading.
 if (useNative) {
   new MutationObserver(function(mxns) {
     for (var i=0, l=mxns.length, m; (i < l) && (m=mxns[i]); i++) {
@@ -146,6 +156,17 @@ if (useNative) {
       element.addEventListener('error', markTargetLoaded);
     }
   }
+
+  // make sure to catch any imports that are in the process of loading
+  // when this script is run.
+  (function() {
+    if (document.readyState === 'loading') {
+      var imports = document.querySelectorAll('link[rel=import]');
+      for (var i=0, l=imports.length, imp; (i<l) && (imp=imports[i]); i++) {
+        handleImport(imp);
+      }
+    }
+  })();
 
 }
 
