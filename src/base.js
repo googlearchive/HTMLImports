@@ -68,11 +68,15 @@ function whenDocumentReady(callback, doc) {
         doc.removeEventListener(READY_EVENT, checkReady);
         whenDocumentReady(callback, doc);
       }
-    }
+    };
     doc.addEventListener(READY_EVENT, checkReady);
   } else if (callback) {
     callback();
   }
+}
+
+function markTargetLoaded(event) {
+  event.target.__loaded = true;
 }
 
 // call <callback> when we ensure all imports have loaded
@@ -85,13 +89,14 @@ function watchImportsLoad(callback, doc) {
     }
   }
   function loadedImport(e) {
+    markTargetLoaded(e);
     loaded++;
     checkDone();
   }
   if (l) {
     for (var i=0, imp; (i<l) && (imp=imports[i]); i++) {
       if (isImportLoaded(imp)) {
-        loadedImport.call(imp);
+        loadedImport.call(imp, {target: imp});
       } else {
         imp.addEventListener('load', loadedImport);
         imp.addEventListener('error', loadedImport);
@@ -140,10 +145,6 @@ if (useNative) {
       element.addEventListener('load', markTargetLoaded);
       element.addEventListener('error', markTargetLoaded);
     }
-  }
-
-  function markTargetLoaded(event) {
-    event.target.__loaded = true;
   }
 
 }
