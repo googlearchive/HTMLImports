@@ -111,8 +111,14 @@ function watchImportsLoad(callback, doc) {
 
 // NOTE: test for native imports loading is based on explicitly watching
 // all imports (see below).
+// We cannot rely on this entirely without watching the entire document
+// for import links. For perf reasons, currently only head is watched.
+// Instead, we fallback to checking if the import property is available 
+// and the document is not itself loading. 
 function isImportLoaded(link) {
-  return useNative ? link.__loaded : link.__importParsed;
+  return useNative ? link.__loaded || 
+      (link.import && link.import.readyState !== 'loading') :
+      link.__importParsed;
 }
 
 // TODO(sorvell): Workaround for 

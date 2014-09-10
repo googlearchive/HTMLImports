@@ -19,15 +19,14 @@
     <script src="../../src/base.js"></script>
     <script src="../../../tools/test/htmltest.js"></script>
     <script src="../../../tools/test/chai/chai.js"></script>
-    
-    <link rel="import" href="imports/import-1.html">
   </head>
   <body>
+    <link rel="import" href="imports/import-1.html">
     <script>
       if (!HTMLImports.useNative) {
         done();
       } else {
-        addEventListener('HTMLImportsLoaded', function() {
+        addEventListener('HTMLImportsLoaded', function(e) {
           chai.assert.ok(true, 'HTMLImportsLoaded');
           done();
         });
