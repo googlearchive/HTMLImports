@@ -217,10 +217,14 @@ var importParser = {
   },
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
+    this._mayParse = [];
     return !this.parsingElement && this.nextToParseInDoc(mainDoc);
   },
   nextToParseInDoc: function(doc, link) {
-    if (doc) {
+    // use `marParse` list to avoid looping into the same document again
+    // since it could cause an iloop.
+    if (doc && this._mayParse.indexOf(doc) < 0) {
+      this._mayParse.push(doc);
       var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));
       for (var i=0, l=nodes.length, p=0, n; (i<l) && (n=nodes[i]); i++) {
         if (!this.isParsed(n)) {
