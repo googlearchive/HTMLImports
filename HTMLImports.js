@@ -26,9 +26,9 @@ var modules = [
   'src/path.js',
   'src/xhr.js',
   'src/Loader.js',
+  'src/Observer.js',
   'src/parser.js',
   'src/importer.js',
-  'src/observe.js',
   'src/boot.js'
 ];
 

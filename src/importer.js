@@ -14,6 +14,7 @@ var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var IMPORT_SELECTOR = scope.IMPORT_SELECTOR;
 var rootDocument = scope.rootDocument;
 var Loader = scope.Loader;
+var Observer = scope.Observer;
 var parser = scope.parser;
 
 // importer
@@ -86,8 +87,39 @@ var importer = {
   
   bootDocument: function(doc) {
     this.loadSubtree(doc);
-    this.observe(doc);
+    // observe documents for new elements being added
+    importObserver.observe(doc);
     parser.parseNext();
+  },
+
+  // process (load/parse) any nodes added to imported documents.
+  added: function(nodes) {
+    var owner, parsed;
+    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
+      if (!owner) {
+        owner = n.ownerDocument;
+        parsed = parser.isParsed(owner);
+      }
+      // note: the act of loading kicks the parser, so we use parseDynamic's
+      // 2nd argument to control if this added node needs to kick the parser.
+      loading = this.shouldLoadNode(n);
+      if (loading) {
+        this.loadNode(n);
+      }
+      if (this.shouldParseNode(n) && parsed) {
+        parser.parseDynamic(n, loading);
+      }
+    }
+  },
+
+  shouldLoadNode: function(node) {
+    return (node.nodeType === 1) && matches.call(node,
+        this.loadSelectorsForNode(node));
+  },
+
+  shouldParseNode: function(node) {
+    return (node.nodeType === 1) && matches.call(node,
+        parser.parseSelectorsForNode(node));  
   },
   
   loadedAll: function() {
@@ -99,6 +131,9 @@ var importer = {
 // loader singleton
 var importLoader = new Loader(importer.loaded.bind(importer), 
     importer.loadedAll.bind(importer));
+
+// observer singleton
+var importObserver = new Observer(importer.added.bind(importer));
 
 function isDocumentLink(elt) {
   return isLinkRel(elt, IMPORT_LINK_TYPE);
@@ -149,6 +184,13 @@ function makeDocument(resource, url) {
   }
   return doc;
 }
+
+// x-plat matches
+var matches = HTMLElement.prototype.matches || 
+    HTMLElement.prototype.matchesSelector || 
+    HTMLElement.prototype.webkitMatchesSelector ||
+    HTMLElement.prototype.mozMatchesSelector ||
+    HTMLElement.prototype.msMatchesSelector;
 
 // Polyfill document.baseURI for browsers without it.
 if (!document.baseURI) {
