@@ -8,10 +8,13 @@
  */
 (function(scope){
 
+// imports
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
-var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 var importer = scope.importer;
 var parser = scope.parser;
+
+var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
+
 
 // we track mutations for addedNodes, looking for imports
 function handler(mutations) {
@@ -23,30 +26,38 @@ function handler(mutations) {
 }
 
 // find loadable elements and add them to the importer
+// IFF the owning document has already parsed, then parsable elements
+// need to be marked for dynamic parsing.
 function addedNodes(nodes) {
-  var owner;
-  for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
-    owner = owner || n.ownerDocument;
-    if (shouldLoadNode(n)) {
+  var owner, parsed;
+  for (var i=0, l=nodes.length, n, loading; (i<l) && (n=nodes[i]); i++) {
+    if (!owner) {
+      owner = n.ownerDocument;
+      parsed = parser.isParsed(owner);
+    }
+    // note: the act of loading kicks the parser, so we use parseDynamic's
+    // 2nd argument to control if this added node needs to kick the parser.
+    loading = shouldLoadNode(n);
+    if (loading) {
       importer.loadNode(n);
+    }
+    if (shouldParseNode(n) && parsed) {
+      parser.parseDynamic(n, loading);
     }
     if (n.children && n.children.length) {
       addedNodes(n.children);
     }
   }
-  // TODO(sorvell): This is not the right approach here. We shouldn't need to
-  // invalidate parsing when an element is added. Disabling this code 
-  // until a better approach is found.
-  /*
-  if (owner) {
-    parser.invalidateParse(owner);
-  }
-  */
 }
 
 function shouldLoadNode(node) {
   return (node.nodeType === 1) && matches.call(node,
       importer.loadSelectorsForNode(node));
+}
+
+function shouldParseNode(node) {
+  return (node.nodeType === 1) && matches.call(node,
+      parser.parseSelectorsForNode(node));  
 }
 
 // x-plat matches

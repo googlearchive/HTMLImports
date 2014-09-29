@@ -8,17 +8,15 @@
  */
  (function(scope) {
 
+// imports
 var useNative = scope.useNative;
 var flags = scope.flags;
-var IMPORT_LINK_TYPE = 'import';
-
-// TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 
 if (!useNative) {
 
   // imports
+  var rootDocument = scope.rootDocument;
   var xhr = scope.xhr;
   var Loader = scope.Loader;
   var parser = scope.parser;
@@ -30,32 +28,40 @@ if (!useNative) {
   // - loads any linked import documents (with deduping)
 
   var importer = {
+
     documents: {},
+    
     // nodes to load in the mian document
     documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+    
     // nodes to load in imports
     importsPreloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']'
     ].join(','),
+    
     loadNode: function(node) {
       importLoader.addNode(node);
     },
+    
     // load all loadable elements within the parent element
     loadSubtree: function(parent) {
       var nodes = this.marshalNodes(parent);
       // add these nodes to loader's queue
       importLoader.addNodes(nodes);
     },
+    
     marshalNodes: function(parent) {
       // all preloadable nodes in inDocument
       return parent.querySelectorAll(this.loadSelectorsForNode(parent));
     },
+    
     // find the proper set of load selectors for a given node
     loadSelectorsForNode: function(node) {
       var doc = node.ownerDocument || node;
-      return doc === mainDoc ? this.documentPreloadSelectors :
+      return doc === rootDocument ? this.documentPreloadSelectors :
           this.importsPreloadSelectors;
     },
+    
     loaded: function(url, elt, resource, err, redirectedUrl) {
       flags.load && console.log('loaded', url, elt);
       // store generic resource
@@ -84,14 +90,17 @@ if (!useNative) {
       }
       parser.parseNext();
     },
+    
     bootDocument: function(doc) {
       this.loadSubtree(doc);
       this.observe(doc);
       parser.parseNext();
     },
+    
     loadedAll: function() {
       parser.parseNext();
     }
+
   };
 
   // loader singleton
@@ -159,7 +168,7 @@ if (!useNative) {
     };
 
     Object.defineProperty(document, 'baseURI', baseURIDescriptor);
-    Object.defineProperty(mainDoc, 'baseURI', baseURIDescriptor);
+    Object.defineProperty(rootDocument, 'baseURI', baseURIDescriptor);
   }
 
   // IE shim for CustomEvent
@@ -183,6 +192,5 @@ if (!useNative) {
 scope.importer = importer;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.importLoader = importLoader;
-
 
 })(window.HTMLImports);
