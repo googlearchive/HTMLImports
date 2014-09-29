@@ -9,10 +9,12 @@
 (function(scope) {
 
 // imports
+var path = scope.path;
 var rootDocument = scope.rootDocument;
 var flags = scope.flags;
 var isIE = scope.isIE;
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
+var IMPORT_SELECTOR = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 
 // importParser
 // highlander object to manage parsing of imports
@@ -20,16 +22,15 @@ var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 // and ensures proper parse order
 // parse order is enforced by crawling the tree and monitoring which elements
 // have been parsed; async parsing is also supported.
-
 // highlander object for parsing a document tree
 var importParser = {
 
   // parse selectors for main document elements
-  documentSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+  documentSelectors: IMPORT_SELECTOR,
 
   // parse selectors for import document elements
   importsSelectors: [
-    'link[rel=' + IMPORT_LINK_TYPE + ']',
+    IMPORT_SELECTOR,
     'link[rel=stylesheet]',
     'style',
     'script:not([type])',
@@ -329,39 +330,8 @@ function cloneStyle(style) {
   return clone;
 }
 
-// path fixup: style elements in imports must be made relative to the main 
-// document. We fixup url's in url() and @import.
-var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
-var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
-
-var path = {
-
-  resolveUrlsInStyle: function(style) {
-    var doc = style.ownerDocument;
-    var resolver = doc.createElement('a');
-    style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
-    return style;  
-  },
-
-  resolveUrlsInCssText: function(cssText, urlObj) {
-    var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
-    r = this.replaceUrls(r, urlObj, CSS_IMPORT_REGEXP);
-    return r;
-  },
-
-  replaceUrls: function(text, urlObj, regexp) {
-    return text.replace(regexp, function(m, pre, url, post) {
-      var urlPath = url.replace(/["']/g, '');
-      urlObj.href = urlPath;
-      urlPath = urlObj.href;
-      return pre + '\'' + urlPath + '\'' + post;
-    });    
-  }
-
-};
-
 // exports
 scope.parser = importParser;
-scope.path = path;
+scope.IMPORT_SELECTOR = IMPORT_SELECTOR;
 
 })(HTMLImports);

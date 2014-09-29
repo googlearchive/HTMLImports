@@ -6,7 +6,8 @@
 module.exports = function(grunt) {
   var readManifest = require('../tools/loader/readManifest.js');
 
-  HTMLComponents = readManifest('build.json');
+  var HTMLImports = readManifest('build.json');
+  var HTMLImportsNative = readManifest('build-native.json');
   grunt.initConfig({
     karma: {
       options: {
@@ -21,13 +22,22 @@ module.exports = function(grunt) {
       }
     },
     uglify: {
-      HTMLComponents: {
+      HTMLImports: {
         options: {
-          sourceMap: 'html-components.min.source-map.js',
+          sourceMap: 'HTMLImports.min.js.map',
           banner: grunt.file.read('banner.txt')
         },
         files: {
-          'html-imports.min.js': HTMLComponents
+          'HTMLImports.min.js': HTMLImports
+        }
+      },
+      HTMLImportsNative: {
+        options: {
+          sourceMap: 'HTMLImports-native.min.js.map',
+          banner: grunt.file.read('banner.txt')
+        },
+        files: {
+          'HTMLImports-native.min.js': HTMLImportsNative
         }
       }
     },

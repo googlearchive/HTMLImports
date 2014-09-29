@@ -9,14 +9,14 @@
 (function(scope) {
 
   // imports
-  var path = scope.path;
   var xhr = scope.xhr;
   var flags = scope.flags;
 
-  // TODO(sorvell): this loader supports a dynamic list of urls
+  // This loader supports a dynamic list of urls
   // and an oncomplete callback that is called when the loader is done.
-  // The polyfill currently does *not* need this dynamism or the onComplete
-  // concept. Because of this, the loader could be simplified quite a bit.
+  // NOTE: The polyfill currently does *not* need this dynamism or the 
+  // onComplete concept. Because of this, the loader could be simplified 
+  // quite a bit.
   var Loader = function(onLoad, onComplete) {
     this.cache = {};
     this.onload = onLoad;
@@ -142,48 +142,7 @@
 
   };
 
-  xhr = xhr || {
-    async: true,
-
-    ok: function(request) {
-      return (request.status >= 200 && request.status < 300)
-          || (request.status === 304)
-          || (request.status === 0);
-    },
-
-    load: function(url, next, nextContext) {
-      var request = new XMLHttpRequest();
-      if (scope.flags.debug || scope.flags.bust) {
-        url += '?' + Math.random();
-      }
-      request.open('GET', url, xhr.async);
-      request.addEventListener('readystatechange', function(e) {
-        if (request.readyState === 4) {
-          // Servers redirecting an import can add a Location header to help us
-          // polyfill correctly.
-          var locationHeader = request.getResponseHeader("Location");
-          var redirectedUrl = null;
-          if (locationHeader) {
-            var redirectedUrl = (locationHeader.substr( 0, 1 ) === "/")
-              ? location.origin + locationHeader  // Location is a relative path
-              : locationHeader;                    // Full path
-          }
-          next.call(nextContext, !xhr.ok(request) && request,
-              request.response || request.responseText, redirectedUrl);
-        }
-      });
-      request.send();
-      return request;
-    },
-
-    loadDocument: function(url, next, nextContext) {
-      this.load(url, next, nextContext).responseType = 'document';
-    }
-    
-  };
-
   // exports
-  scope.xhr = xhr;
   scope.Loader = Loader;
 
 })(window.HTMLImports);

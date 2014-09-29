@@ -9,12 +9,8 @@
 (function(scope){
 
 // imports
-var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 var importer = scope.importer;
 var parser = scope.parser;
-
-var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
-
 
 // we track mutations for addedNodes, looking for imports
 function handler(mutations) {
