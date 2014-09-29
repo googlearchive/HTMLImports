@@ -8,17 +8,15 @@
  */
  (function(scope) {
 
+// imports
 var useNative = scope.useNative;
 var flags = scope.flags;
-var IMPORT_LINK_TYPE = 'import';
-
-// TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 
 if (!useNative) {
 
   // imports
+  var rootDocument = scope.rootDocument;
   var xhr = scope.xhr;
   var Loader = scope.Loader;
   var parser = scope.parser;
@@ -60,7 +58,7 @@ if (!useNative) {
     // find the proper set of load selectors for a given node
     loadSelectorsForNode: function(node) {
       var doc = node.ownerDocument || node;
-      return doc === mainDoc ? this.documentPreloadSelectors :
+      return doc === rootDocument ? this.documentPreloadSelectors :
           this.importsPreloadSelectors;
     },
     
@@ -170,7 +168,7 @@ if (!useNative) {
     };
 
     Object.defineProperty(document, 'baseURI', baseURIDescriptor);
-    Object.defineProperty(mainDoc, 'baseURI', baseURIDescriptor);
+    Object.defineProperty(rootDocument, 'baseURI', baseURIDescriptor);
   }
 
   // IE shim for CustomEvent

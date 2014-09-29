@@ -8,12 +8,11 @@
  */
 (function(scope) {
 
-var IMPORT_LINK_TYPE = 'import';
+// imports
+var rootDocument = scope.rootDocument;
 var flags = scope.flags;
 var isIE = scope.isIE;
-// TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 
 // importParser
 // highlander object to manage parsing of imports
@@ -237,7 +236,7 @@ var importParser = {
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
     this._mayParse = [];
-    return !this.parsingElement && (this.nextToParseInDoc(mainDoc) || 
+    return !this.parsingElement && (this.nextToParseInDoc(rootDocument) || 
         this.nextToParseDynamic());
   },
 
@@ -268,7 +267,8 @@ var importParser = {
   // return the set of parse selectors relevant for this node.
   parseSelectorsForNode: function(node) {
     var doc = node.ownerDocument || node;
-    return doc === mainDoc ? this.documentSelectors : this.importsSelectors;
+    return doc === rootDocument ? this.documentSelectors :
+        this.importsSelectors;
   },
 
   isParsed: function(node) {
