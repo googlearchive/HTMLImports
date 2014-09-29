@@ -16,8 +16,7 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
   htmlTest('html/dynamic.html');
-  // TODO(sjmiles): feature not implemented currently
-  //htmlTest('html/dynamic-elements.html');
+  htmlTest('html/dynamic-elements.html');
   htmlTest('html/csp.html');
   htmlTest('html/encoding.html');
   htmlTest('html/HTMLImportsLoaded-native.html');

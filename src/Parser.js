@@ -39,6 +39,7 @@ var importParser = {
     script: 'parseScript',
     style: 'parseStyle'
   },
+  dynamicElements: [],
   // try to parse the next import in the tree
   parseNext: function() {
     var next = this.nextToParse();
@@ -57,6 +58,12 @@ var importParser = {
       fn.call(this, elt);
     }
   },
+  parseDynamic: function(elt, quiet) {
+    this.dynamicElements.push(elt);
+    if (!quiet) {
+      this.parseNext();
+    }
+  },
   // only 1 element may be parsed at a time; parsing is async so each
   // parsing implementation must inform the system that parsing is complete
   // via markParsingComplete.
@@ -71,26 +78,19 @@ var importParser = {
   },
   markParsingComplete: function(elt) {
     elt.__importParsed = true;
+    this.markDynamicParsingComplete(elt);
     if (elt.__importElement) {
       elt.__importElement.__importParsed = true;
+      this.markDynamicParsingComplete(elt.__importElement);
     }
     this.parsingElement = null;
     flags.parse && console.log('completed', elt);
   },
-  invalidateParse: function(doc) {
-    if (doc && doc.__importLink) {
-      doc.__importParsed = doc.__importLink.__importParsed = false;
-      this.parseSoon();
+  markDynamicParsingComplete: function(elt) {
+    var i = this.dynamicElements.indexOf(elt);
+    if (i >= 0) {
+      this.dynamicElements.splice(i, 1);
     }
-  },
-  parseSoon: function() {
-    if (this._parseSoon) {
-      cancelAnimationFrame(this._parseDelay);
-    }
-    var parser = this;
-    this._parseSoon = requestAnimationFrame(function() {
-      parser.parseNext();
-    });
   },
   parseImport: function(elt) {
     // TODO(sorvell): consider if there's a better way to do this;
@@ -218,7 +218,8 @@ var importParser = {
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
     this._mayParse = [];
-    return !this.parsingElement && this.nextToParseInDoc(mainDoc);
+    return !this.parsingElement && (this.nextToParseInDoc(mainDoc) || 
+        this.nextToParseDynamic());
   },
   nextToParseInDoc: function(doc, link) {
     // use `marParse` list to avoid looping into the same document again
@@ -239,6 +240,9 @@ var importParser = {
     // all nodes have been parsed, ready to parse import, if any
     return link;
   },
+  nextToParseDynamic: function() {
+    return this.dynamicElements[0];
+  },
   // return the set of parse selectors relevant for this node.
   parseSelectorsForNode: function(node) {
     var doc = node.ownerDocument || node;
@@ -246,6 +250,9 @@ var importParser = {
   },
   isParsed: function(node) {
     return node.__importParsed;
+  },
+  needsDynamicParsing: function(elt) {
+    return (this.dynamicElements.indexOf(elt) >= 0);
   },
   hasResource: function(node) {
     if (nodeIsImport(node) && (node.import === undefined)) {
