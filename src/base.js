@@ -12,13 +12,14 @@
 var hasNative = ('import' in document.createElement('link'));
 var useNative = hasNative;
 
-isIE = /Trident/.test(navigator.userAgent);
+var isIE = /Trident/.test(navigator.userAgent);
 
 // TODO(sorvell): SD polyfill intrusion
 var hasShadowDOMPolyfill = Boolean(window.ShadowDOMPolyfill);
 var wrap = function(node) {
   return hasShadowDOMPolyfill ? ShadowDOMPolyfill.wrapIfNeeded(node) : node;
 };
+
 var mainDoc = wrap(document);
     
 // NOTE: We cannot polyfill document.currentScript because it's not possible
