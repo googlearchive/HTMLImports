@@ -30,32 +30,40 @@ if (!useNative) {
   // - loads any linked import documents (with deduping)
 
   var importer = {
+
     documents: {},
+    
     // nodes to load in the mian document
     documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+    
     // nodes to load in imports
     importsPreloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']'
     ].join(','),
+    
     loadNode: function(node) {
       importLoader.addNode(node);
     },
+    
     // load all loadable elements within the parent element
     loadSubtree: function(parent) {
       var nodes = this.marshalNodes(parent);
       // add these nodes to loader's queue
       importLoader.addNodes(nodes);
     },
+    
     marshalNodes: function(parent) {
       // all preloadable nodes in inDocument
       return parent.querySelectorAll(this.loadSelectorsForNode(parent));
     },
+    
     // find the proper set of load selectors for a given node
     loadSelectorsForNode: function(node) {
       var doc = node.ownerDocument || node;
       return doc === mainDoc ? this.documentPreloadSelectors :
           this.importsPreloadSelectors;
     },
+    
     loaded: function(url, elt, resource, err, redirectedUrl) {
       flags.load && console.log('loaded', url, elt);
       // store generic resource
@@ -84,14 +92,17 @@ if (!useNative) {
       }
       parser.parseNext();
     },
+    
     bootDocument: function(doc) {
       this.loadSubtree(doc);
       this.observe(doc);
       parser.parseNext();
     },
+    
     loadedAll: function() {
       parser.parseNext();
     }
+
   };
 
   // loader singleton
@@ -183,6 +194,5 @@ if (!useNative) {
 scope.importer = importer;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.importLoader = importLoader;
-
 
 })(window.HTMLImports);

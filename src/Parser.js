@@ -24,8 +24,10 @@ var mainDoc = window.ShadowDOMPolyfill ?
 
 // highlander object for parsing a document tree
 var importParser = {
+
   // parse selectors for main document elements
   documentSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+
   // parse selectors for import document elements
   importsSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
@@ -34,12 +36,15 @@ var importParser = {
     'script:not([type])',
     'script[type="text/javascript"]'
   ].join(','),
+
   map: {
     link: 'parseLink',
     script: 'parseScript',
     style: 'parseStyle'
   },
+
   dynamicElements: [],
+
   // try to parse the next import in the tree
   parseNext: function() {
     var next = this.nextToParse();
@@ -47,6 +52,7 @@ var importParser = {
       this.parse(next);
     }
   },
+
   parse: function(elt) {
     if (this.isParsed(elt)) {
       flags.parse && console.log('[%s] is already parsed', elt.localName);
@@ -58,12 +64,14 @@ var importParser = {
       fn.call(this, elt);
     }
   },
+
   parseDynamic: function(elt, quiet) {
     this.dynamicElements.push(elt);
     if (!quiet) {
       this.parseNext();
     }
   },
+
   // only 1 element may be parsed at a time; parsing is async so each
   // parsing implementation must inform the system that parsing is complete
   // via markParsingComplete.
@@ -76,6 +84,7 @@ var importParser = {
     flags.parse && console.log('parsing', elt);
     this.parsingElement = elt;
   },
+
   markParsingComplete: function(elt) {
     elt.__importParsed = true;
     this.markDynamicParsingComplete(elt);
@@ -86,12 +95,14 @@ var importParser = {
     this.parsingElement = null;
     flags.parse && console.log('completed', elt);
   },
+
   markDynamicParsingComplete: function(elt) {
     var i = this.dynamicElements.indexOf(elt);
     if (i >= 0) {
       this.dynamicElements.splice(i, 1);
     }
   },
+
   parseImport: function(elt) {
     // TODO(sorvell): consider if there's a better way to do this;
     // expose an imports parsing hook; this is needed, for example, by the
@@ -122,6 +133,7 @@ var importParser = {
     }
     this.parseNext();
   },
+
   parseLink: function(linkElt) {
     if (nodeIsImport(linkElt)) {
       this.parseImport(linkElt);
@@ -131,6 +143,7 @@ var importParser = {
       this.parseGeneric(linkElt);
     }
   },
+
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
     var src = elt;
@@ -138,10 +151,12 @@ var importParser = {
     elt.__importElement = src;
     this.parseGeneric(elt);
   },
+
   parseGeneric: function(elt) {
     this.trackElement(elt);
     this.addElementToDocument(elt);
   },
+
   rootImportForElement: function(elt) {
     var n = elt;
     while (n.ownerDocument.__importLink) {
@@ -149,6 +164,7 @@ var importParser = {
     }
     return n;
   },
+
   addElementToDocument: function(elt) {
     var port = this.rootImportForElement(elt.__importElement || elt);
     var l = port.__insertedElements = port.__insertedElements || 0;
@@ -158,6 +174,7 @@ var importParser = {
     }
     port.parentNode.insertBefore(elt, refNode);
   },
+
   // tracks when a loadable element has loaded
   trackElement: function(elt, callback) {
     var self = this;
@@ -197,6 +214,7 @@ var importParser = {
       }
     }
   },
+
   // NOTE: execute scripts by injecting them and watching for the load/error
   // event. Inline scripts are handled via dataURL's because browsers tend to
   // provide correct parsing errors in this case. If this has any compatibility
@@ -215,12 +233,14 @@ var importParser = {
     });
     this.addElementToDocument(script);
   },
+
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
     this._mayParse = [];
     return !this.parsingElement && (this.nextToParseInDoc(mainDoc) || 
         this.nextToParseDynamic());
   },
+
   nextToParseInDoc: function(doc, link) {
     // use `marParse` list to avoid looping into the same document again
     // since it could cause an iloop.
@@ -240,26 +260,32 @@ var importParser = {
     // all nodes have been parsed, ready to parse import, if any
     return link;
   },
+
   nextToParseDynamic: function() {
     return this.dynamicElements[0];
   },
+
   // return the set of parse selectors relevant for this node.
   parseSelectorsForNode: function(node) {
     var doc = node.ownerDocument || node;
     return doc === mainDoc ? this.documentSelectors : this.importsSelectors;
   },
+
   isParsed: function(node) {
     return node.__importParsed;
   },
+
   needsDynamicParsing: function(elt) {
     return (this.dynamicElements.indexOf(elt) >= 0);
   },
+
   hasResource: function(node) {
     if (nodeIsImport(node) && (node.import === undefined)) {
       return false;
     }
     return true;
   }
+
 };
 
 function nodeIsImport(elt) {
@@ -309,17 +335,20 @@ var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
 
 var path = {
+
   resolveUrlsInStyle: function(style) {
     var doc = style.ownerDocument;
     var resolver = doc.createElement('a');
     style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
     return style;  
   },
+
   resolveUrlsInCssText: function(cssText, urlObj) {
     var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
     r = this.replaceUrls(r, urlObj, CSS_IMPORT_REGEXP);
     return r;
   },
+
   replaceUrls: function(text, urlObj, regexp) {
     return text.replace(regexp, function(m, pre, url, post) {
       var urlPath = url.replace(/["']/g, '');
@@ -328,7 +357,8 @@ var path = {
       return pre + '\'' + urlPath + '\'' + post;
     });    
   }
-}
+
+};
 
 // exports
 scope.parser = importParser;

@@ -26,6 +26,7 @@
   };
 
   Loader.prototype = {
+
     addNodes: function(nodes) {
       // number of transactions to complete
       this.inflight += nodes.length;
@@ -36,6 +37,7 @@
       // anything to do?
       this.checkDone();
     },
+
     addNode: function(node) {
       // number of transactions to complete
       this.inflight++;
@@ -44,6 +46,7 @@
       // anything to do?
       this.checkDone();
     },
+
     require: function(elt) {
       var url = elt.src || elt.href;
       // ensure we have a standard url that can be used
@@ -56,6 +59,7 @@
         this.fetch(url, elt);
       }
     },
+
     dedupe: function(url, elt) {
       if (this.pending[url]) {
         // add to list of nodes waiting for inUrl
@@ -76,6 +80,7 @@
       // need fetch (not a dupe)
       return false;
     },
+
     fetch: function(url, elt) {
       flags.load && console.log('fetch', url, elt);
       if (url.match(/^data:/)) {
@@ -111,6 +116,7 @@
         */
       }
     },
+
     receive: function(url, elt, err, resource, redirectedUrl) {
       this.cache[url] = resource;
       var $p = this.pending[url];
@@ -122,24 +128,29 @@
       }
       this.pending[url] = null;
     },
+
     tail: function() {
       --this.inflight;
       this.checkDone();
     },
+
     checkDone: function() {
       if (!this.inflight) {
         this.oncomplete();
       }
     }
+
   };
 
   xhr = xhr || {
     async: true,
+
     ok: function(request) {
       return (request.status >= 200 && request.status < 300)
           || (request.status === 304)
           || (request.status === 0);
     },
+
     load: function(url, next, nextContext) {
       var request = new XMLHttpRequest();
       if (scope.flags.debug || scope.flags.bust) {
@@ -164,9 +175,11 @@
       request.send();
       return request;
     },
+
     loadDocument: function(url, next, nextContext) {
       this.load(url, next, nextContext).responseType = 'document';
     }
+    
   };
 
   // exports
