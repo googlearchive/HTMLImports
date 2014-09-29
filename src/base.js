@@ -13,7 +13,20 @@ window.HTMLImports = window.HTMLImports || {flags:{}};
 
 (function(scope) {
 
+var flags = {};
+
+// convert url arguments to flags
+
+if (!flags.noOpts) {
+  location.search.slice(1).split('&').forEach(function(o) {
+    o = o.split('=');
+    o[0] && (flags[o[0]] = o[1] || true);
+  });
+}
+
+
 // exports
+scope.flags = flags;
 scope.IMPORT_LINK_TYPE = 'import';
 scope.hasNative = (scope.IMPORT_LINK_TYPE in document.createElement('link'));
 scope.useNative = scope.hasNative;
