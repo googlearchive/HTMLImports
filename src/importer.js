@@ -63,7 +63,7 @@ var importer = {
     // see https://code.google.com/p/chromium/issues/detail?id=249381.
     elt.__resource = resource;
     elt.__error = err;
-    if (isDocumentLink(elt)) {
+    if (isImportLink(elt)) {
       var doc = this.documents[url];
       // if we've never seen a document at this url
       if (doc === undefined) {
@@ -135,7 +135,7 @@ var importLoader = new Loader(importer.loaded.bind(importer),
 // observer singleton
 var importObserver = new Observer(importer.added.bind(importer));
 
-function isDocumentLink(elt) {
+function isImportLink(elt) {
   return isLinkRel(elt, IMPORT_LINK_TYPE);
 }
 
@@ -150,7 +150,7 @@ function isScript(elt) {
 function makeDocument(resource, url) {
   // create a new HTML document
   var doc = resource;
-  if (!(doc instanceof Document)) {
+  if (!(doc instanceof HTMLDocument)) {
     doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
   }
   // cache the new document's source url
@@ -173,7 +173,7 @@ function makeDocument(resource, url) {
   // template bootstrapping must (?) come before element upgrade
   // but we cannot bootstrap templates until they are in a document
   // which is too late
-  if (!(resource instanceof Document)) {
+  if (!(resource instanceof HTMLDocument)) {
     // install html
     doc.body.innerHTML = resource;
   }
