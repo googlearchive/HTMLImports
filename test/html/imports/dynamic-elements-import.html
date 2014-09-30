@@ -11,7 +11,7 @@
 (function() {
   var doc = document._currentScript.ownerDocument;
   setTimeout(function() {
-    var script = doc.createElement('script')
+    var script = doc.createElement('script');
     script.textContent = 'window.asyncScript = true;';
     doc.body.appendChild(script);
 
@@ -20,9 +20,9 @@
     doc.body.appendChild(style);
 
     // async for MO.
-    requestAnimationFrame(function() {
+    setTimeout(function() {
       document.dispatchEvent(new CustomEvent('asyncElementsAdded', {bubbles: true}));
-    });
+    }, 1);
   }, 100);
 })();
 </script>

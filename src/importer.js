@@ -149,10 +149,7 @@ function isScript(elt) {
 
 function makeDocument(resource, url) {
   // create a new HTML document
-  var doc = resource;
-  if (!(doc instanceof HTMLDocument)) {
-    doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
-  }
+  var doc = document.implementation.createHTMLDocument(IMPORT_LINK_TYPE);
   // cache the new document's source url
   doc._URL = url;
   // establish a relative path via <base>
@@ -168,15 +165,8 @@ function makeDocument(resource, url) {
 
   doc.head.appendChild(meta);
   doc.head.appendChild(base);
-  // install HTML last as it may trigger CustomElement upgrades
-  // TODO(sjmiles): problem wrt to template boostrapping below,
-  // template bootstrapping must (?) come before element upgrade
-  // but we cannot bootstrap templates until they are in a document
-  // which is too late
-  if (!(resource instanceof HTMLDocument)) {
-    // install html
-    doc.body.innerHTML = resource;
-  }
+  // install html
+  doc.body.innerHTML = resource;
   // TODO(sorvell): ideally this code is not aware of Template polyfill,
   // but for now the polyfill needs help to bootstrap these templates
   if (window.HTMLTemplateElement && HTMLTemplateElement.bootstrap) {

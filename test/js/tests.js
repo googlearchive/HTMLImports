@@ -16,8 +16,12 @@ htmlSuite('HTMLImports', function() {
   htmlTest('html/currentScript.html');
   htmlTest('html/dedupe.html');
   htmlTest('html/dynamic.html');
-  htmlTest('html/dynamic-elements.html');
   htmlTest('html/csp.html');
   htmlTest('html/encoding.html');
   htmlTest('html/HTMLImportsLoaded-native.html');
+  // NOTE: The MO polyfill does not function on disconnected documents
+  // like html imports so dynamic elements in imports are not supported.
+  if (!navigator.userAgent.match(/MSIE 10/)) {
+    htmlTest('html/dynamic-elements.html');
+  }
 });
