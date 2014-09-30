@@ -304,19 +304,12 @@ function generateScriptContent(script) {
 
 // calculate source map hint
 function generateSourceMapHint(script) {
-  var moniker = script.__nodeUrl;
-  if (!moniker) {
-    moniker = script.ownerDocument.baseURI;
-    // there could be more than one script this url
-    var tag = '[' + Math.floor((Math.random()+1)*1000) + ']';
-    // TODO(sjmiles): Polymer hack, should be pluggable if we need to allow 
-    // this sort of thing
-    var matches = script.textContent.match(/Polymer\(['"]([^'"]*)/);
-    tag = matches && matches[1] || tag;
-    // tag the moniker
-    moniker += '/' + tag + '.js';
-  }
-  return '\n//# sourceURL=' + moniker + '\n';
+  var owner = script.ownerDocument;
+  owner.__importedScripts = owner.__importedScripts || 0;
+  var moniker = script.ownerDocument.baseURI;
+  var num = owner.__importedScripts ? '-' + owner.__importedScripts : '';
+  owner.__importedScripts++;
+  return '\n//# sourceURL=' + moniker + num + '.js\n';
 }
 
 // style/stylesheet handling
