@@ -7,6 +7,11 @@
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
 (function(scope){
+
+if (scope.useNative) {
+  return;
+}
+
 /*
   Use a mutation observer to call a callback for all added nodes.
 */

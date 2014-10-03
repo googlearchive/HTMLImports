@@ -8,6 +8,10 @@
  */
  (function(scope) {
 
+if (scope.useNative) {
+  return;
+}
+
 // imports
 var flags = scope.flags;
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;

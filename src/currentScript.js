@@ -16,7 +16,6 @@ var wrap = function(node) {
 };
 var rootDocument = wrap(document);
     
-
 /**
   Support `currentScript` on all browsers as `document._currentScript.`
 

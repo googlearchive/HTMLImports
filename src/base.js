@@ -16,14 +16,12 @@ window.HTMLImports = window.HTMLImports || {flags:{}};
 var flags = {};
 
 // convert url arguments to flags
-
 if (!flags.noOpts) {
   location.search.slice(1).split('&').forEach(function(o) {
     o = o.split('=');
     o[0] && (flags[o[0]] = o[1] || true);
   });
 }
-
 
 // exports
 scope.flags = flags;

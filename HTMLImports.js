@@ -14,13 +14,10 @@ var thisFile = 'HTMLImports.js';
   Provides api compatibility. Should be loaded even when native
   HTMLImports is available.
 */
-var baseModules = [
+var modules = [
   'src/base.js',
   'src/currentScript.js',
-  'src/importsLoaded.js'
-];
-
-var modules = [
+  'src/importsLoaded.js',
   '../WeakMap/WeakMap.js',
   '../MutationObservers/MutationObserver.js',
   'src/path.js',
@@ -42,12 +39,6 @@ function loadFiles(files) {
   });
 }
 
-// for simplicity, we directly check here if native imports is supported.
-var useNative = ('import' in document.createElement('link'));
-
-loadFiles(baseModules);
-if (!useNative) {
-  loadFiles(modules);
-}
+loadFiles(modules);
 
 })();

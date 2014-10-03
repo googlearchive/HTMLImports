@@ -8,50 +8,54 @@
  */
 (function(scope) {
 
-  /*
-    xhr processor.
-  */
-  xhr = {
-    async: true,
+if (scope.useNative) {
+  return;
+}  
 
-    ok: function(request) {
-      return (request.status >= 200 && request.status < 300)
-          || (request.status === 304)
-          || (request.status === 0);
-    },
+/*
+  xhr processor.
+*/
+xhr = {
+  async: true,
 
-    load: function(url, next, nextContext) {
-      var request = new XMLHttpRequest();
-      if (scope.flags.debug || scope.flags.bust) {
-        url += '?' + Math.random();
-      }
-      request.open('GET', url, xhr.async);
-      request.addEventListener('readystatechange', function(e) {
-        if (request.readyState === 4) {
-          // Servers redirecting an import can add a Location header to help us
-          // polyfill correctly.
-          var locationHeader = request.getResponseHeader("Location");
-          var redirectedUrl = null;
-          if (locationHeader) {
-            var redirectedUrl = (locationHeader.substr( 0, 1 ) === "/")
-              ? location.origin + locationHeader  // Location is a relative path
-              : locationHeader;                    // Full path
-          }
-          next.call(nextContext, !xhr.ok(request) && request,
-              request.response || request.responseText, redirectedUrl);
-        }
-      });
-      request.send();
-      return request;
-    },
+  ok: function(request) {
+    return (request.status >= 200 && request.status < 300)
+        || (request.status === 304)
+        || (request.status === 0);
+  },
 
-    loadDocument: function(url, next, nextContext) {
-      this.load(url, next, nextContext).responseType = 'document';
+  load: function(url, next, nextContext) {
+    var request = new XMLHttpRequest();
+    if (scope.flags.debug || scope.flags.bust) {
+      url += '?' + Math.random();
     }
-    
-  };
+    request.open('GET', url, xhr.async);
+    request.addEventListener('readystatechange', function(e) {
+      if (request.readyState === 4) {
+        // Servers redirecting an import can add a Location header to help us
+        // polyfill correctly.
+        var locationHeader = request.getResponseHeader("Location");
+        var redirectedUrl = null;
+        if (locationHeader) {
+          var redirectedUrl = (locationHeader.substr( 0, 1 ) === "/")
+            ? location.origin + locationHeader  // Location is a relative path
+            : locationHeader;                    // Full path
+        }
+        next.call(nextContext, !xhr.ok(request) && request,
+            request.response || request.responseText, redirectedUrl);
+      }
+    });
+    request.send();
+    return request;
+  },
 
-  // exports
-  scope.xhr = xhr;
+  loadDocument: function(url, next, nextContext) {
+    this.load(url, next, nextContext).responseType = 'document';
+  }
+  
+};
+
+// exports
+scope.xhr = xhr;
 
 })(window.HTMLImports);

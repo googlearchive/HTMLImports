@@ -8,6 +8,10 @@
  */
 (function(scope){
 
+if (scope.useNative) {
+  return;
+}
+
 // imports
 var rootDocument = scope.rootDocument;
 
