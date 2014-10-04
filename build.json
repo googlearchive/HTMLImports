@@ -1,13 +1,12 @@
 [
   "../MutationObservers/build.json",
   "src/base.js",
-  "src/currentScript.js",
-  "src/importsLoaded.js",
   "src/path.js",
   "src/xhr.js",
   "src/Loader.js",
   "src/Observer.js",
   "src/parser.js",
   "src/importer.js",
-  "src/boot.js"
+  "src/dynamic.js",
+  "src/boot.js",
 ]

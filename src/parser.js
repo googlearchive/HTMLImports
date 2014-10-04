@@ -6,11 +6,7 @@
  * Code distributed by Google as part of the polymer project is also
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
-(function(scope) {
-
-if (scope.useNative) {
-  return;
-}
+HTMLImports.addModule(function(scope) {
 
 // imports
 var path = scope.path;
@@ -22,11 +18,11 @@ var IMPORT_SELECTOR = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 
 // importParser
 // highlander object to manage parsing of imports
-// parses import related elements
-// and ensures proper parse order
+// parses import related elements and ensures proper parse order
 // parse order is enforced by crawling the tree and monitoring which elements
-// have been parsed; async parsing is also supported.
-// highlander object for parsing a document tree
+// have been parsed;
+// elements can be dynamically added to imports. These are maintained in a 
+// separate queue and parsed after all other elements.
 var importParser = {
 
   // parse selectors for main document elements
@@ -69,6 +65,7 @@ var importParser = {
     }
   },
 
+  // marks an element for dynamic parsing and attempts to parse the next element
   parseDynamic: function(elt, quiet) {
     this.dynamicElements.push(elt);
     if (!quiet) {
@@ -223,13 +220,12 @@ var importParser = {
   // event. Inline scripts are handled via dataURL's because browsers tend to
   // provide correct parsing errors in this case. If this has any compatibility
   // issues, we can switch to injecting the inline script with textContent.
-  // Scripts with dataURL's do not appear to generate load events and therefore
-  // we assume they execute synchronously.
   parseScript: function(scriptElt) {
     var script = document.createElement('script');
     script.__importElement = scriptElt;
     script.src = scriptElt.src ? scriptElt.src : 
         generateScriptDataUrl(scriptElt);
+    // keep track of executing script to help polyfill `document.currentScript`
     scope.currentScript = scriptElt;
     this.trackElement(script, function(e) {
       script.parentNode.removeChild(script);
@@ -239,6 +235,9 @@ var importParser = {
   },
 
   // determine the next element in the tree which should be parsed
+  // crawl the document tree to find the next unparsed element
+  // then process any dynamically added elements (these should process in 'add'
+  // order.
   nextToParse: function() {
     this._mayParse = [];
     return !this.parsingElement && (this.nextToParseInDoc(rootDocument) || 
@@ -265,6 +264,7 @@ var importParser = {
     return link;
   },
 
+  // note dynamically added elements are stored in a separate queue
   nextToParseDynamic: function() {
     return this.dynamicElements[0];
   },
@@ -331,4 +331,4 @@ function cloneStyle(style) {
 scope.parser = importParser;
 scope.IMPORT_SELECTOR = IMPORT_SELECTOR;
 
-})(HTMLImports);
+});

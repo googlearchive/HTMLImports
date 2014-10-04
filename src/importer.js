@@ -6,11 +6,7 @@
  * Code distributed by Google as part of the polymer project is also
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
- (function(scope) {
-
-if (scope.useNative) {
-  return;
-}
+HTMLImports.addModule(function(scope) {
 
 // imports
 var flags = scope.flags;
@@ -25,6 +21,9 @@ var parser = scope.parser;
 // highlander object to manage loading of imports
 // for any document, importer:
 // - loads any linked import documents (with deduping)
+// - whenever an import is loaded, prompts the parser to try to parse
+// - observes imported documents for new elements (these are handled via the 
+// dynamic importer)
 var importer = {
 
   documents: {},
@@ -92,52 +91,24 @@ var importer = {
   bootDocument: function(doc) {
     this.loadSubtree(doc);
     // observe documents for new elements being added
-    importObserver.observe(doc);
+    this.observer.observe(doc);
     parser.parseNext();
   },
 
-  // process (load/parse) any nodes added to imported documents.
-  added: function(nodes) {
-    var owner, parsed;
-    for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
-      if (!owner) {
-        owner = n.ownerDocument;
-        parsed = parser.isParsed(owner);
-      }
-      // note: the act of loading kicks the parser, so we use parseDynamic's
-      // 2nd argument to control if this added node needs to kick the parser.
-      loading = this.shouldLoadNode(n);
-      if (loading) {
-        this.loadNode(n);
-      }
-      if (this.shouldParseNode(n) && parsed) {
-        parser.parseDynamic(n, loading);
-      }
-    }
-  },
-
-  shouldLoadNode: function(node) {
-    return (node.nodeType === 1) && matches.call(node,
-        this.loadSelectorsForNode(node));
-  },
-
-  shouldParseNode: function(node) {
-    return (node.nodeType === 1) && matches.call(node,
-        parser.parseSelectorsForNode(node));  
-  },
-  
   loadedAll: function() {
     parser.parseNext();
   }
 
 };
 
-// loader singleton
+// loader singleton to handle loading imports
 var importLoader = new Loader(importer.loaded.bind(importer), 
     importer.loadedAll.bind(importer));
 
-// observer singleton
-var importObserver = new Observer(importer.added.bind(importer));
+// observer singleton to handle observing elements in imports
+// NOTE: the observer has a node added callback and this is set 
+// by the dynamic importer module.
+importer.observer = new Observer();
 
 function isImportLink(elt) {
   return isLinkRel(elt, IMPORT_LINK_TYPE);
@@ -145,10 +116,6 @@ function isImportLink(elt) {
 
 function isLinkRel(elt, rel) {
   return elt.localName === 'link' && elt.getAttribute('rel') === rel;
-}
-
-function isScript(elt) {
-  return elt.localName === 'script';
 }
 
 function makeDocument(resource, url) {
@@ -179,13 +146,6 @@ function makeDocument(resource, url) {
   return doc;
 }
 
-// x-plat matches
-var matches = HTMLElement.prototype.matches || 
-    HTMLElement.prototype.matchesSelector || 
-    HTMLElement.prototype.webkitMatchesSelector ||
-    HTMLElement.prototype.mozMatchesSelector ||
-    HTMLElement.prototype.msMatchesSelector;
-
 // Polyfill document.baseURI for browsers without it.
 if (!document.baseURI) {
   var baseURIDescriptor = {
@@ -204,4 +164,4 @@ if (!document.baseURI) {
 scope.importer = importer;
 scope.importLoader = importLoader;
 
-})(window.HTMLImports);
+});

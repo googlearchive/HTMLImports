@@ -8,9 +8,18 @@
  */
 (function(scope){
 
+// imports
+initializeModules = scope.initializeModules;
+
 if (scope.useNative) {
   return;
 }
+
+// Initialize polyfill modules. Note, polyfill modules are loaded but not 
+// executed; this is a convenient way to control which modules run when 
+// the polyfill is required and allows the polyfill to load even when it's
+// not needed.
+initializeModules();
 
 // imports
 var rootDocument = scope.rootDocument;

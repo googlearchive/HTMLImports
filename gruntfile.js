@@ -30,15 +30,6 @@ module.exports = function(grunt) {
         files: {
           'HTMLImports.min.js': HTMLImports
         }
-      },
-      HTMLImportsNative: {
-        options: {
-          sourceMap: 'HTMLImports-native.min.js.map',
-          banner: grunt.file.read('banner.txt')
-        },
-        files: {
-          'HTMLImports-native.min.js': HTMLImportsNative
-        }
       }
     },
     yuidoc: {

@@ -7,17 +7,35 @@
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
 (function() {
-  
-var thisFile = 'HTMLImports.js';
+
+// Estblish polyfill scope. We do this here to store flags. Flags are not 
+// supported in the build.
+window.HTMLImports = window.HTMLImports || {flags:{}};  
+
+// Flags. Convert url arguments to flags
+var flags = {};
+if (!flags.noOpts) {
+  location.search.slice(1).split('&').forEach(function(o) {
+    o = o.split('=');
+    o[0] && (flags[o[0]] = o[1] || true);
+  });
+}
 
 /*
-  Provides api compatibility. Should be loaded even when native
-  HTMLImports is available.
+ Load. The debug loader loads base files even when native HTMLImports
+ exists for api compabitility. This provides: 
+
+  * `document._currentScript`
+  * `HTMLImportsLoadedEvent`
+  * `HTMLImports.whenReady(callback)
+
+NOTE: When the polyfill is built, this is handled via including files that
+conditionally execute `modules` if the polyfill is needed.
 */
+var file = 'HTMLImports.js';
+
 var modules = [
   'src/base.js',
-  'src/currentScript.js',
-  'src/importsLoaded.js',
   '../WeakMap/WeakMap.js',
   '../MutationObservers/MutationObserver.js',
   'src/path.js',
@@ -26,19 +44,19 @@ var modules = [
   'src/Observer.js',
   'src/parser.js',
   'src/importer.js',
+  'src/dynamic.js',
   'src/boot.js'
 ];
 
-var src = document.querySelector('script[src*="' + thisFile +
-    '"]').attributes.src.value;
-var basePath = src.slice(0, src.indexOf(thisFile));
+var src = 
+  document.querySelector('script[src*="' + file + '"]').getAttribute('src');
+var basePath = src.slice(0, src.indexOf(file));
 
-function loadFiles(files) {
-  files.forEach(function(f) {
-    document.write('<script src="' + basePath + f + '"></script>');
-  });
-}
+modules.forEach(function(f) {
+  document.write('<script src="' + basePath + f + '"></script>');
+});
 
-loadFiles(modules);
+// exports 
+HTMLImports.flags = flags;
 
 })();

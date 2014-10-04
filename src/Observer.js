@@ -6,11 +6,7 @@
  * Code distributed by Google as part of the polymer project is also
  * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
-(function(scope){
-
-if (scope.useNative) {
-  return;
-}
+HTMLImports.addModule(function(scope) {
 
 /*
   Use a mutation observer to call a callback for all added nodes.
@@ -51,4 +47,4 @@ Observer.prototype = {
 // exports
 scope.Observer = Observer;
 
-})(HTMLImports);
+});
