@@ -21,17 +21,7 @@ if (!flags.noOpts) {
   });
 }
 
-/*
- Load. The debug loader loads base files even when native HTMLImports
- exists for api compabitility. This provides: 
-
-  * `document._currentScript`
-  * `HTMLImportsLoadedEvent`
-  * `HTMLImports.whenReady(callback)
-
-NOTE: When the polyfill is built, this is handled via including files that
-conditionally execute `modules` if the polyfill is needed.
-*/
+// Load.
 var file = 'HTMLImports.js';
 
 var modules = [

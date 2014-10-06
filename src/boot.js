@@ -11,6 +11,15 @@
 // imports
 initializeModules = scope.initializeModules;
 
+/*
+NOTE: Even when native HTMLImports exists, the following api is available by
+loading the polyfill. This provides api compabitility where the polyfill
+cannot be "correct":
+
+  * `document._currentScript`
+  * `HTMLImportsLoaded` event
+  * `HTMLImports.whenReady(callback)
+*/
 if (scope.useNative) {
   return;
 }
