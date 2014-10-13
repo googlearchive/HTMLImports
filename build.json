@@ -8,5 +8,5 @@
   "src/parser.js",
   "src/importer.js",
   "src/dynamic.js",
-  "src/boot.js",
+  "src/boot.js"
 ]
