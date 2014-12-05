@@ -10,8 +10,8 @@
     "HTMLImports"
   ],
   "dependencies": {
-    "MutationObservers": "Polymer/MutationObservers#^0.4.0",
-    "tools": "Polymer/tools#^0.4.0"
+    "MutationObservers": "Polymer/MutationObservers#0.4.1",
+    "tools": "Polymer/tools#0.4.1"
   },
   "license": "BSD",
   "private": true,
