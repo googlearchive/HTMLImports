@@ -9,7 +9,7 @@
 (function(scope){
 
 // imports
-initializeModules = scope.initializeModules;
+var initializeModules = scope.initializeModules;
 
 /*
 NOTE: Even when native HTMLImports exists, the following api is available by
