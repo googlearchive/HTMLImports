@@ -11,7 +11,7 @@ HTMLImports.addModule(function(scope) {
 /*
   xhr processor.
 */
-xhr = {
+var xhr = {
   async: true,
 
   ok: function(request) {
