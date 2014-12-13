@@ -29,7 +29,7 @@ var dynamic = {
       }
       // note: the act of loading kicks the parser, so we use parseDynamic's
       // 2nd argument to control if this added node needs to kick the parser.
-      loading = this.shouldLoadNode(n);
+      var loading = this.shouldLoadNode(n);
       if (loading) {
         importer.loadNode(n);
       }
